@@ -626,7 +626,7 @@ export default function DatesPage() {
                                         )}>
                                           {pkg.name}
                                         </span>
-                                        {pkg.isDefault && (
+                                        {pkg.is_default && (
                                           <Badge variant="outline" className="text-xs">Predeterminado</Badge>
                                         )}
                                         {override.blocked_dates.length > 0 && (
