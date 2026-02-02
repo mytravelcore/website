@@ -1,4 +1,4 @@
-import React from "react";
+
 import { updateSession } from "@/supabase/middleware";
 import { type NextRequest, NextResponse } from "next/server";
 
@@ -7,6 +7,11 @@ export async function middleware(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith('/admin')) {
     // Allow access to login page without authentication
     if (request.nextUrl.pathname === '/admin/login') {
+      // If already authenticated, redirect to admin dashboard
+      const adminSession = request.cookies.get('adminSession')?.value;
+      if (adminSession) {
+        return NextResponse.redirect(new URL('/admin', request.url));
+      }
       return await updateSession(request);
     }
 

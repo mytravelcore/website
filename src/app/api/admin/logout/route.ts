@@ -1,14 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 
-export async function POST(request: NextRequest) {
-  const response = NextResponse.json({ success: true });
+export async function POST() {
+  const response = NextResponse.json(
+    { message: 'Logout exitoso' },
+    { status: 200 }
+  );
 
   // Clear the admin session cookie
-  response.cookies.set({
-    name: 'adminSession',
-    value: '',
+  response.cookies.set('adminSession', '', {
     httpOnly: true,
-    maxAge: 0, // This effectively deletes the cookie
+    secure: process.env.NODE_ENV === 'production',
+    path: '/',
+    sameSite: 'lax',
+    maxAge: 0, // Expire immediately
   });
 
   return response;

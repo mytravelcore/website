@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
 
-const ADMIN_PASSWORD = '$Trav3lCor3*2026#';
+const ADMIN_PASSWORD = 'Tr@v3lcore2026#';
 
 export async function POST(request: NextRequest) {
   try {

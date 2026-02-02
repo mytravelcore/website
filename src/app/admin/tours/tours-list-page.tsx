@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Edit, Trash2, Eye } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Plus, Search, Edit, Trash2, Eye, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -31,7 +32,14 @@ export default function ToursListPage({ initialTours }: ToursListPageProps) {
   const [deleteTarget, setDeleteTarget] = useState<Tour | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [editingTourId, setEditingTourId] = useState<string | null>(null);
   const supabase = createClient();
+  const router = useRouter();
+
+  const handleEditTour = (tourId: string) => {
+    setEditingTourId(tourId);
+    router.push(`/admin/tours/${tourId}/edit`);
+  };
 
   useEffect(() => {
     const filtered = tours.filter(tour => 
@@ -226,11 +234,19 @@ export default function ToursListPage({ initialTours }: ToursListPageProps) {
                             <Eye className="w-4 h-4" />
                           </Button>
                         </Link>
-                        <Link href={`/admin/tours/${tour.id}/edit`}>
-                          <Button variant="ghost" size="sm" className="text-slate-600">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-slate-600"
+                          onClick={() => handleEditTour(tour.id)}
+                          disabled={editingTourId === tour.id}
+                        >
+                          {editingTourId === tour.id ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
                             <Edit className="w-4 h-4" />
-                          </Button>
-                        </Link>
+                          )}
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -298,6 +314,16 @@ export default function ToursListPage({ initialTours }: ToursListPageProps) {
           </div>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Loading Overlay when navigating to edit */}
+      {editingTourId && (
+        <div className="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-3 p-6 rounded-xl bg-white shadow-lg border border-slate-200">
+            <Loader2 className="w-8 h-8 animate-spin text-[#3546A6]" />
+            <span className="text-sm font-medium text-slate-600">Cargando editor...</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

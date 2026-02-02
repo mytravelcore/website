@@ -519,7 +519,18 @@ export default function AdminDashboard({
                     Mi perfil
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem className="text-red-600">
+                  <DropdownMenuItem 
+                    className="text-red-600 cursor-pointer"
+                    onClick={async () => {
+                      try {
+                        await fetch('/api/admin/logout', { method: 'POST' });
+                        router.push('/admin/login');
+                        router.refresh();
+                      } catch (error) {
+                        console.error('Logout error:', error);
+                      }
+                    }}
+                  >
                     <LogOut className="w-4 h-4 mr-2" />
                     Cerrar sesión
                   </DropdownMenuItem>
