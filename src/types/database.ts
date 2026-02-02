@@ -68,6 +68,7 @@ export interface Tour {
   // Age & Group
   age_min: number | null;
   age_max: number | null;
+  age_range?: string | null;
   group_size_min: number | null;
   group_size_max: number | null;
   // Pricing
@@ -92,6 +93,11 @@ export interface Tour {
   destination?: Destination;
   tour_activities?: TourActivity[];
   tour_dates?: TourDate[];
+  // Label fields
+  destination_label?: string | null;
+  difficulty_label?: string | null;
+  activities_label?: string | null;
+  group_size_label?: string | null;
 }
 
 export interface PricePackage {
