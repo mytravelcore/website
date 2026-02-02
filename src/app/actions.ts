@@ -4,16 +4,8 @@ import { encodedRedirect } from "@/utils/utils";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from '@/supabase/server'
-import { v4 as uuidv4 } from 'uuid';
-import { Storage } from '@google-cloud/storage';
 
  export const signUpAction = async (formData: FormData) => {
-
-  const bucketName = process.env.GCS_BUCKET_NAME;
-  const projectId = process.env.GCP_PROJECT_ID;
-  const clientEmail = process.env.GCP_CLIENT_EMAIL;
-  const serviceAccountBase64 = process.env.GCP_SERVICE_ACCOUNT_BASE64;
-
   const email = formData.get("email")?.toString();
   const password = formData.get("password")?.toString();
   const fullName = formData.get("full_name")?.toString() || '';
@@ -27,11 +19,6 @@ import { Storage } from '@google-cloud/storage';
       "Email and password are required",
     );
   }
-
-  // GCS vars are optional for signup. If missing, we simply skip the write.
-  const hasGcs = Boolean(
-    bucketName && projectId && clientEmail && serviceAccountBase64,
-  );
 
   const {
     data: { user },
@@ -79,37 +66,6 @@ import { Storage } from '@google-cloud/storage';
     }
   } catch (err) {
     console.error("Error in user profile creation:", err);
-  }
-
-  // Optional: Write a tiny marker file to GCS (best-effort)
-  if (hasGcs) {
-    try {
-      const decodedServiceAccount = JSON.parse(
-        Buffer.from(serviceAccountBase64!, "base64").toString("utf-8"),
-      );
-
-      const storage = new Storage({
-        projectId: projectId!,
-        credentials: {
-          client_email: clientEmail!,
-          private_key: decodedServiceAccount.private_key,
-        },
-      });
-
-      const bucket = storage.bucket(bucketName!);
-      const filename = `${uuidv4()}.txt`;
-      const file = bucket.file(filename);
-      const buffer = Buffer.from(email, "utf-8");
-
-      await file.save(buffer, {
-        metadata: { contentType: "text/plain; charset=utf-8" },
-      });
-
-      const publicUrl = file.publicUrl();
-      console.log(`Public URL: ${publicUrl}`);
-    } catch (err) {
-      console.error("Error writing marker file to GCS:", err);
-    }
   }
 
   return encodedRedirect(

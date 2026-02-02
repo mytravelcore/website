@@ -157,10 +157,10 @@ export default function TourDetail({ tour, relatedTours, suggestedTours, package
     const packagesChannel = supabase
       .channel('packages-changes')
       .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'pricing_packages', filter: `tour_id=eq.${tour.id}` },
+        { event: '*', schema: 'public', table: 'price_packages', filter: `tour_id=eq.${tour.id}` },
         async () => {
           const { data } = await supabase
-            .from('pricing_packages')
+            .from('price_packages')
             .select('*')
             .eq('tour_id', tour.id)
             .eq('is_active', true)

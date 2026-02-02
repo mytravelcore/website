@@ -41,7 +41,7 @@ export default async function TourPage({ params }: { params: { slug: string } })
 
   // Fetch pricing packages for this tour
   const { data: packages } = await supabase
-    .from('pricing_packages')
+    .from('price_packages')
     .select('*')
     .eq('tour_id', tour.id)
     .eq('is_active', true)

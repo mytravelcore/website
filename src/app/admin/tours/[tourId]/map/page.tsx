@@ -26,7 +26,7 @@ export default function MapPage() {
         .single();
 
       if (error || !tourData) {
-        router.push('/admin/tours');
+        setLoading(false);
         return;
       }
 
@@ -41,6 +41,15 @@ export default function MapPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="w-8 h-8 animate-spin text-[#3546A6]" />
+      </div>
+    );
+  }
+
+  if (!tour) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-6">
+        <h2 className="text-base font-semibold text-slate-900">No se pudo cargar el tour</h2>
+        <p className="mt-2 text-sm text-slate-600">Vuelve a intentarlo.</p>
       </div>
     );
   }

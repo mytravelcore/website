@@ -1,10 +1,7 @@
 import { useCallback, useState } from 'react';
-import { uploadImageToGCS, type EntityType, type UploadImageResult } from '@/lib/gcs-upload';
 
 interface UseImageUploadOptions {
-  entityType: EntityType;
-  entityId: string;
-  onSuccess?: (result: UploadImageResult) => void;
+  onSuccess?: (url: string) => void;
   onError?: (error: Error) => void;
 }
 
@@ -12,77 +9,62 @@ interface UseImageUploadReturn {
   isLoading: boolean;
   error: Error | null;
   uploadedUrl: string | null;
-  uploadedPath: string | null;
-  upload: (file: File) => Promise<UploadImageResult | null>;
+  setImageUrl: (url: string) => void;
   reset: () => void;
 }
 
 /**
- * Hook for uploading images to GCS
+ * Hook for managing image URL state
  * Handles loading states, errors, and success callbacks
  * 
  * @example
- * const { upload, isLoading, error, uploadedUrl } = useImageUpload({
- *   entityType: 'tour',
- *   entityId: tourId,
- *   onSuccess: (result) => {
- *     console.log('Uploaded to:', result.publicUrl);
+ * const { setImageUrl, isLoading, error, uploadedUrl } = useImageUpload({
+ *   onSuccess: (url) => {
+ *     console.log('Image URL set:', url);
  *   },
  * });
  */
 export function useImageUpload({
-  entityType,
-  entityId,
   onSuccess,
   onError,
-}: UseImageUploadOptions): UseImageUploadReturn {
+}: UseImageUploadOptions = {}): UseImageUploadReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
   const [uploadedUrl, setUploadedUrl] = useState<string | null>(null);
-  const [uploadedPath, setUploadedPath] = useState<string | null>(null);
 
-  const upload = useCallback(
-    async (file: File): Promise<UploadImageResult | null> => {
+  const setImageUrl = useCallback(
+    (url: string) => {
       setIsLoading(true);
       setError(null);
 
       try {
-        const result = await uploadImageToGCS({
-          file,
-          entityType,
-          entityId,
-        });
-
-        setUploadedUrl(result.publicUrl);
-        setUploadedPath(result.storagePath);
-
-        onSuccess?.(result);
-        return result;
+        // Basic URL validation
+        new URL(url);
+        
+        setUploadedUrl(url);
+        onSuccess?.(url);
       } catch (err) {
-        const error = err instanceof Error ? err : new Error('Upload failed');
+        const error = err instanceof Error ? err : new Error('Invalid URL');
         setError(error);
         onError?.(error);
-        return null;
       } finally {
         setIsLoading(false);
       }
     },
-    [entityType, entityId, onSuccess, onError]
+    [onSuccess, onError]
   );
 
   const reset = useCallback(() => {
     setIsLoading(false);
     setError(null);
     setUploadedUrl(null);
-    setUploadedPath(null);
   }, []);
 
   return {
     isLoading,
     error,
     uploadedUrl,
-    uploadedPath,
-    upload,
+    setImageUrl,
     reset,
   };
 }

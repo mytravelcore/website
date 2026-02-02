@@ -18,40 +18,31 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
-          gallery_image_storage_paths: string[] | null
-          gallery_image_urls: string[] | null
           icon: string | null
           id: string
-          image_storage_path: string | null
           image_url: string | null
           name: string
-          slug: string | null
+          slug: string
           updated_at: string | null
         }
         Insert: {
           created_at?: string | null
           description?: string | null
-          gallery_image_storage_paths?: string[] | null
-          gallery_image_urls?: string[] | null
           icon?: string | null
           id?: string
-          image_storage_path?: string | null
           image_url?: string | null
           name: string
-          slug?: string | null
+          slug: string
           updated_at?: string | null
         }
         Update: {
           created_at?: string | null
           description?: string | null
-          gallery_image_storage_paths?: string[] | null
-          gallery_image_urls?: string[] | null
           icon?: string | null
           id?: string
-          image_storage_path?: string | null
           image_url?: string | null
           name?: string
-          slug?: string | null
+          slug?: string
           updated_at?: string | null
         }
         Relationships: []
@@ -90,107 +81,120 @@ export type Database = {
         Row: {
           country: string
           created_at: string | null
-          gallery_image_storage_paths: string[] | null
-          gallery_image_urls: string[] | null
-          hero_image_url: string | null
+          gallery_images: string[] | null
           id: string
-          image_storage_path: string | null
           image_url: string | null
           long_description: string | null
           name: string
-          parent_id: string | null
           region: string | null
           short_description: string | null
-          slug: string | null
+          slug: string
           updated_at: string | null
         }
         Insert: {
           country: string
           created_at?: string | null
-          gallery_image_storage_paths?: string[] | null
-          gallery_image_urls?: string[] | null
-          hero_image_url?: string | null
+          gallery_images?: string[] | null
           id?: string
-          image_storage_path?: string | null
           image_url?: string | null
           long_description?: string | null
           name: string
-          parent_id?: string | null
           region?: string | null
           short_description?: string | null
-          slug?: string | null
+          slug: string
           updated_at?: string | null
         }
         Update: {
           country?: string
           created_at?: string | null
-          gallery_image_storage_paths?: string[] | null
-          gallery_image_urls?: string[] | null
-          hero_image_url?: string | null
+          gallery_images?: string[] | null
           id?: string
-          image_storage_path?: string | null
           image_url?: string | null
           long_description?: string | null
           name?: string
-          parent_id?: string | null
           region?: string | null
           short_description?: string | null
-          slug?: string | null
+          slug?: string
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "destinations_parent_id_fkey"
-            columns: ["parent_id"]
-            isOneToOne: false
-            referencedRelation: "destinations"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
-      pricing_packages: {
+      price_packages: {
         Row: {
+          adult_crossed_price: number | null
+          adult_max_pax: number | null
+          adult_min_pax: number | null
+          adult_price: number
+          child_age_max: number | null
+          child_age_min: number | null
+          child_crossed_price: number | null
+          child_max_pax: number | null
+          child_min_pax: number | null
+          child_price: number | null
           created_at: string | null
-          currency: string | null
+          description: string | null
+          group_discount_enabled: boolean | null
+          group_discount_min_pax: number | null
+          group_discount_percentage: number | null
           id: string
           is_active: boolean | null
+          is_default: boolean | null
           name: string
-          package_type: string | null
-          price: number
-          primary_category: string | null
           sort_order: number | null
-          tour_id: string | null
+          tour_id: string
           updated_at: string | null
         }
         Insert: {
+          adult_crossed_price?: number | null
+          adult_max_pax?: number | null
+          adult_min_pax?: number | null
+          adult_price: number
+          child_age_max?: number | null
+          child_age_min?: number | null
+          child_crossed_price?: number | null
+          child_max_pax?: number | null
+          child_min_pax?: number | null
+          child_price?: number | null
           created_at?: string | null
-          currency?: string | null
+          description?: string | null
+          group_discount_enabled?: boolean | null
+          group_discount_min_pax?: number | null
+          group_discount_percentage?: number | null
           id?: string
           is_active?: boolean | null
+          is_default?: boolean | null
           name: string
-          package_type?: string | null
-          price: number
-          primary_category?: string | null
           sort_order?: number | null
-          tour_id?: string | null
+          tour_id: string
           updated_at?: string | null
         }
         Update: {
+          adult_crossed_price?: number | null
+          adult_max_pax?: number | null
+          adult_min_pax?: number | null
+          adult_price?: number
+          child_age_max?: number | null
+          child_age_min?: number | null
+          child_crossed_price?: number | null
+          child_max_pax?: number | null
+          child_min_pax?: number | null
+          child_price?: number | null
           created_at?: string | null
-          currency?: string | null
+          description?: string | null
+          group_discount_enabled?: boolean | null
+          group_discount_min_pax?: number | null
+          group_discount_percentage?: number | null
           id?: string
           is_active?: boolean | null
+          is_default?: boolean | null
           name?: string
-          package_type?: string | null
-          price?: number
-          primary_category?: string | null
           sort_order?: number | null
-          tour_id?: string | null
+          tour_id?: string
           updated_at?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "pricing_packages_tour_id_fkey"
+            foreignKeyName: "price_packages_tour_id_fkey"
             columns: ["tour_id"]
             isOneToOne: false
             referencedRelation: "tours"
@@ -205,8 +209,8 @@ export type Database = {
           image_url: string | null
           name: string
           rating: number | null
-          source: string | null
           text: string
+          tour_name: string | null
         }
         Insert: {
           created_at?: string | null
@@ -214,8 +218,8 @@ export type Database = {
           image_url?: string | null
           name: string
           rating?: number | null
-          source?: string | null
           text: string
+          tour_name?: string | null
         }
         Update: {
           created_at?: string | null
@@ -223,29 +227,29 @@ export type Database = {
           image_url?: string | null
           name?: string
           rating?: number | null
-          source?: string | null
           text?: string
+          tour_name?: string | null
         }
         Relationships: []
       }
       tour_activities: {
         Row: {
-          activity_id: string | null
+          activity_id: string
           created_at: string | null
           id: string
-          tour_id: string | null
+          tour_id: string
         }
         Insert: {
-          activity_id?: string | null
+          activity_id: string
           created_at?: string | null
           id?: string
-          tour_id?: string | null
+          tour_id: string
         }
         Update: {
-          activity_id?: string | null
+          activity_id?: string
           created_at?: string | null
           id?: string
-          tour_id?: string | null
+          tour_id?: string
         }
         Relationships: [
           {
@@ -264,121 +268,19 @@ export type Database = {
           },
         ]
       }
-      tour_bullets: {
-        Row: {
-          created_at: string | null
-          id: string
-          sort_order: number | null
-          text: string
-          tour_id: string | null
-          type: string
-        }
-        Insert: {
-          created_at?: string | null
-          id?: string
-          sort_order?: number | null
-          text: string
-          tour_id?: string | null
-          type: string
-        }
-        Update: {
-          created_at?: string | null
-          id?: string
-          sort_order?: number | null
-          text?: string
-          tour_id?: string | null
-          type?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tour_bullets_tour_id_fkey"
-            columns: ["tour_id"]
-            isOneToOne: false
-            referencedRelation: "tours"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tour_date_blocked_dates: {
-        Row: {
-          blocked_date: string
-          created_at: string | null
-          id: string
-          tour_date_package_id: string
-        }
-        Insert: {
-          blocked_date: string
-          created_at?: string | null
-          id?: string
-          tour_date_package_id: string
-        }
-        Update: {
-          blocked_date?: string
-          created_at?: string | null
-          id?: string
-          tour_date_package_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tour_date_blocked_dates_tour_date_package_id_fkey"
-            columns: ["tour_date_package_id"]
-            isOneToOne: false
-            referencedRelation: "tour_date_packages"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tour_date_packages: {
-        Row: {
-          available_units: number | null
-          created_at: string | null
-          id: string
-          override_price: number | null
-          package_id: string | null
-          tour_date_id: string | null
-        }
-        Insert: {
-          available_units?: number | null
-          created_at?: string | null
-          id?: string
-          override_price?: number | null
-          package_id?: string | null
-          tour_date_id?: string | null
-        }
-        Update: {
-          available_units?: number | null
-          created_at?: string | null
-          id?: string
-          override_price?: number | null
-          package_id?: string | null
-          tour_date_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tour_date_packages_package_id_fkey"
-            columns: ["package_id"]
-            isOneToOne: false
-            referencedRelation: "pricing_packages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tour_date_packages_tour_date_id_fkey"
-            columns: ["tour_date_id"]
-            isOneToOne: false
-            referencedRelation: "tour_dates"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       tour_dates: {
         Row: {
           created_at: string | null
           end_date: string | null
           id: string
           is_available: boolean | null
+          max_participants: number | null
           notes: string | null
+          repeat_enabled: boolean | null
+          repeat_pattern: string | null
+          repeat_until: string | null
           start_date: string
-          tour_id: string | null
+          tour_id: string
           updated_at: string | null
         }
         Insert: {
@@ -386,9 +288,13 @@ export type Database = {
           end_date?: string | null
           id?: string
           is_available?: boolean | null
+          max_participants?: number | null
           notes?: string | null
+          repeat_enabled?: boolean | null
+          repeat_pattern?: string | null
+          repeat_until?: string | null
           start_date: string
-          tour_id?: string | null
+          tour_id: string
           updated_at?: string | null
         }
         Update: {
@@ -396,9 +302,13 @@ export type Database = {
           end_date?: string | null
           id?: string
           is_available?: boolean | null
+          max_participants?: number | null
           notes?: string | null
+          repeat_enabled?: boolean | null
+          repeat_pattern?: string | null
+          repeat_until?: string | null
           start_date?: string
-          tour_id?: string | null
+          tour_id?: string
           updated_at?: string | null
         }
         Relationships: [
@@ -411,208 +321,89 @@ export type Database = {
           },
         ]
       }
-      tour_destinations: {
-        Row: {
-          created_at: string | null
-          destination_id: string | null
-          id: string
-          tour_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          destination_id?: string | null
-          id?: string
-          tour_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          destination_id?: string | null
-          id?: string
-          tour_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tour_destinations_destination_id_fkey"
-            columns: ["destination_id"]
-            isOneToOne: false
-            referencedRelation: "destinations"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "tour_destinations_tour_id_fkey"
-            columns: ["tour_id"]
-            isOneToOne: false
-            referencedRelation: "tours"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      tour_itinerary_items: {
-        Row: {
-          created_at: string | null
-          day_number: number
-          description: string | null
-          id: string
-          sort_order: number | null
-          title: string
-          tour_id: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          day_number: number
-          description?: string | null
-          id?: string
-          sort_order?: number | null
-          title: string
-          tour_id?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          day_number?: number
-          description?: string | null
-          id?: string
-          sort_order?: number | null
-          title?: string
-          tour_id?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "tour_itinerary_items_tour_id_fkey"
-            columns: ["tour_id"]
-            isOneToOne: false
-            referencedRelation: "tours"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       tours: {
         Row: {
-          activities_label: string | null
           age_max: number | null
           age_min: number | null
-          age_range: string | null
+          base_price_usd: number | null
           category: string | null
           created_at: string | null
           currency: string | null
           destination_id: string | null
-          destination_label: string | null
-          destination_name: string | null
           difficulty: string | null
-          difficulty_label: string | null
-          difficulty_level: string | null
           duration_days: number | null
           excludes: Json | null
+          faqs: Json | null
           featured: boolean | null
-          gallery_image_storage_paths: string[] | null
-          gallery_image_urls: Json | null
-          group_size_label: string | null
+          gallery_images: string[] | null
           group_size_max: number | null
           group_size_min: number | null
-          hero_image_storage_path: string | null
           hero_image_url: string | null
           id: string
           includes: Json | null
           itinerary: Json | null
           long_description: string | null
-          package_type: string | null
-          price_packages: Json | null
-          price_usd: number | null
-          primary_price_category: string | null
           short_description: string | null
           slug: string
-          start_dates: Json | null
-          starting_price_from: number | null
           status: string | null
           subtitle: string | null
           title: string
-          tour_label: string | null
           updated_at: string | null
         }
         Insert: {
-          activities_label?: string | null
           age_max?: number | null
           age_min?: number | null
-          age_range?: string | null
+          base_price_usd?: number | null
           category?: string | null
           created_at?: string | null
           currency?: string | null
           destination_id?: string | null
-          destination_label?: string | null
-          destination_name?: string | null
           difficulty?: string | null
-          difficulty_label?: string | null
-          difficulty_level?: string | null
           duration_days?: number | null
           excludes?: Json | null
+          faqs?: Json | null
           featured?: boolean | null
-          gallery_image_storage_paths?: string[] | null
-          gallery_image_urls?: Json | null
-          group_size_label?: string | null
+          gallery_images?: string[] | null
           group_size_max?: number | null
           group_size_min?: number | null
-          hero_image_storage_path?: string | null
           hero_image_url?: string | null
           id?: string
           includes?: Json | null
           itinerary?: Json | null
           long_description?: string | null
-          package_type?: string | null
-          price_packages?: Json | null
-          price_usd?: number | null
-          primary_price_category?: string | null
           short_description?: string | null
           slug: string
-          start_dates?: Json | null
-          starting_price_from?: number | null
           status?: string | null
           subtitle?: string | null
           title: string
-          tour_label?: string | null
           updated_at?: string | null
         }
         Update: {
-          activities_label?: string | null
           age_max?: number | null
           age_min?: number | null
-          age_range?: string | null
+          base_price_usd?: number | null
           category?: string | null
           created_at?: string | null
           currency?: string | null
           destination_id?: string | null
-          destination_label?: string | null
-          destination_name?: string | null
           difficulty?: string | null
-          difficulty_label?: string | null
-          difficulty_level?: string | null
           duration_days?: number | null
           excludes?: Json | null
+          faqs?: Json | null
           featured?: boolean | null
-          gallery_image_storage_paths?: string[] | null
-          gallery_image_urls?: Json | null
-          group_size_label?: string | null
+          gallery_images?: string[] | null
           group_size_max?: number | null
           group_size_min?: number | null
-          hero_image_storage_path?: string | null
           hero_image_url?: string | null
           id?: string
           includes?: Json | null
           itinerary?: Json | null
           long_description?: string | null
-          package_type?: string | null
-          price_packages?: Json | null
-          price_usd?: number | null
-          primary_price_category?: string | null
           short_description?: string | null
           slug?: string
-          start_dates?: Json | null
-          starting_price_from?: number | null
           status?: string | null
           subtitle?: string | null
           title?: string
-          tour_label?: string | null
           updated_at?: string | null
         }
         Relationships: [

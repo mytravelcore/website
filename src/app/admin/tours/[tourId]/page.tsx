@@ -252,7 +252,7 @@ export default function UnifiedTourEditorPage() {
       ]);
 
       if (tourResult.error || !tourResult.data) {
-        router.push('/admin/tours');
+        setLoading(false);
         return;
       }
 
@@ -729,6 +729,23 @@ export default function UnifiedTourEditorPage() {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="w-8 h-8 animate-spin text-[#3546A6]" />
+      </div>
+    );
+  }
+
+  if (!tour) {
+    return (
+      <div className="flex h-screen items-center justify-center bg-slate-50 px-6">
+        <div className="max-w-md rounded-xl border border-slate-200 bg-white p-6 text-center shadow-sm">
+          <h2 className="text-lg font-semibold text-slate-900">No se pudo cargar el tour</h2>
+          <p className="mt-2 text-sm text-slate-600">
+            Vuelve a intentarlo o regresa a la lista de tours.
+          </p>
+          <div className="mt-4 flex justify-center gap-2">
+            <Button variant="outline" onClick={() => router.push('/admin')}>Volver</Button>
+            <Button onClick={() => window.location.reload()}>Reintentar</Button>
+          </div>
+        </div>
       </div>
     );
   }

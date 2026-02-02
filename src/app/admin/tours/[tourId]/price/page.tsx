@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Select,
@@ -38,10 +39,18 @@ interface PricePackage {
   label: string;
   isDefault: boolean;
   adultPrice: number;
+  adultCrossedPrice?: number;
   adultSingleSupplement: number;
+  adultMinPax: number;
+  adultMaxPax: number | null;
+  adultGroupDiscount: boolean;
   childPrice: number;
+  childCrossedPrice?: number;
   childAgeMin: number;
   childAgeMax: number;
+  childMinPax: number;
+  childMaxPax: number | null;
+  childGroupDiscount: boolean;
   infantPrice: number;
   infantAgeMax: number;
   details: string;
@@ -54,10 +63,18 @@ const defaultPackage: Omit<PricePackage, 'id'> = {
   label: 'Por persona',
   isDefault: false,
   adultPrice: 0,
+  adultCrossedPrice: 0,
   adultSingleSupplement: 0,
+  adultMinPax: 1,
+  adultMaxPax: null,
+  adultGroupDiscount: false,
   childPrice: 0,
+  childCrossedPrice: 0,
   childAgeMin: 3,
   childAgeMax: 11,
+  childMinPax: 1,
+  childMaxPax: null,
+  childGroupDiscount: false,
   infantPrice: 0,
   infantAgeMax: 2,
   details: '',
@@ -68,8 +85,6 @@ const createEmptyPackage = (name: string = 'Nuevo Paquete'): PricePackage => ({
   id: crypto.randomUUID(),
   name,
 });
-
-import { Storage } from '@google-cloud/storage';
 
 export default function PricePage() {
   const params = useParams();
@@ -101,7 +116,7 @@ export default function PricePage() {
         .single();
 
       if (error || !tourData) {
-        router.push('/admin/tours');
+        setLoading(false);
         return;
       }
 
@@ -217,6 +232,19 @@ export default function PricePage() {
     );
   }
 
+  if (!tour) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-6">
+        <h2 className="text-base font-semibold text-slate-900">No se pudo cargar el tour</h2>
+        <p className="mt-2 text-sm text-slate-600">Vuelve a intentarlo o regresa a la lista de tours.</p>
+        <div className="mt-4 flex gap-2">
+          <Button variant="outline" onClick={() => router.push('/admin')}>Volver</Button>
+          <Button onClick={() => window.location.reload()}>Reintentar</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <TooltipProvider>
       <div className="max-w-4xl">
@@ -243,11 +271,11 @@ export default function PricePage() {
         {/* Package Type Selection */}
         <Card className="mb-6">
           <CardContent className="pt-6">
-            <div className="space-y-4">
+            <div className="space-y-6">
               {/* Package Type Toggle */}
-              <div className="flex items-center gap-3">
-                <Label className="flex items-center gap-1">
-                  Tipo de paquete
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-base">
+                  Tipo de Paquete
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <HelpCircle className="w-4 h-4 text-slate-400" />
@@ -257,35 +285,35 @@ export default function PricePage() {
                     </TooltipContent>
                   </Tooltip>
                 </Label>
-                <div className="flex rounded-lg border border-slate-200 overflow-hidden">
+                <div className="flex rounded-lg border border-slate-200 overflow-hidden w-fit">
                   <button
                     className={cn(
-                      "px-6 py-2 text-sm font-medium transition-colors",
+                      "px-24 py-2.5 text-sm font-medium transition-all",
                       packageType === 'single' 
-                        ? "bg-[#3546A6] text-white" 
+                        ? "bg-slate-100 text-[#3546A6] border-b-2 border-[#3546A6]" 
                         : "bg-white text-slate-600 hover:bg-slate-50"
                     )}
                     onClick={() => setPackageType('single')}
                   >
-                    Individual
+                    Single
                   </button>
                   <button
                     className={cn(
-                      "px-6 py-2 text-sm font-medium transition-colors",
+                      "px-24 py-2.5 text-sm font-medium transition-all",
                       packageType === 'multiple' 
-                        ? "bg-[#3546A6] text-white" 
+                        ? "bg-slate-100 text-[#3546A6] border-b-2 border-[#3546A6]" 
                         : "bg-white text-slate-600 hover:bg-slate-50"
                     )}
                     onClick={() => setPackageType('multiple')}
                   >
-                    Múltiple
+                    Multiple
                   </button>
                 </div>
               </div>
 
               {/* Primary Price Category */}
-              <div className="flex items-center gap-3">
-                <Label className="flex items-center gap-1">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2 text-base">
                   Seleccionar Categoría de Precio Principal
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -297,7 +325,7 @@ export default function PricePage() {
                   </Tooltip>
                 </Label>
                 <Select value={primaryCategory} onValueChange={setPrimaryCategory}>
-                  <SelectTrigger className="w-[140px]">
+                  <SelectTrigger className="w-[280px]">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -307,39 +335,27 @@ export default function PricePage() {
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* Add Package Button - Always visible */}
-              <div className="pt-2">
-                <Button
-                  variant="outline"
-                  onClick={addPackage}
-                  className="border-dashed"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Agregar Nuevo Paquete
-                </Button>
-              </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Packages List */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           {packages.map((pkg) => (
             <Collapsible 
               key={pkg.id}
               open={expandedPackages.includes(pkg.id)}
               onOpenChange={() => togglePackageExpand(pkg.id)}
             >
-              <Card>
+              <Card className="border-slate-200 shadow-none">
                 <CollapsibleTrigger asChild>
-                  <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50 transition-colors">
+                  <div className="flex items-center justify-between p-4 cursor-pointer hover:bg-slate-50/50 transition-colors rounded-t-lg">
                     <div className="flex items-center gap-3">
-                      <span className="font-medium text-slate-800">
+                      <span className="font-semibold text-slate-900 text-base">
                         {pkg.name || 'Sin nombre'}
                       </span>
                       {pkg.isDefault && (
-                        <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
+                        <span className="px-2 py-0.5 bg-emerald-100 text-emerald-700 text-xs font-medium rounded-full">
                           Default
                         </span>
                       )}
@@ -348,7 +364,7 @@ export default function PricePage() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-slate-400 hover:text-red-500"
+                        className="h-8 w-8 text-slate-400 hover:text-red-500 hover:bg-red-50"
                         onClick={(e) => {
                           e.stopPropagation();
                           if (packages.length <= 1) {
@@ -376,11 +392,31 @@ export default function PricePage() {
                       onValueChange={(val) => setActivePackageTab({ ...activePackageTab, [pkg.id]: val })}
                       className="mt-4"
                     >
-                      <TabsList className="bg-slate-100">
-                        <TabsTrigger value="general">General</TabsTrigger>
-                        <TabsTrigger value="adult">Adulto</TabsTrigger>
-                        <TabsTrigger value="child">Niño</TabsTrigger>
-                        <TabsTrigger value="details">Detalles</TabsTrigger>
+                      <TabsList className="bg-white border border-slate-200 p-1">
+                        <TabsTrigger 
+                          value="general" 
+                          className="data-[state=active]:bg-[#3546A6] data-[state=active]:text-white"
+                        >
+                          General
+                        </TabsTrigger>
+                        <TabsTrigger 
+                          value="adult"
+                          className="data-[state=active]:bg-[#3546A6] data-[state=active]:text-white"
+                        >
+                          Adult
+                        </TabsTrigger>
+                        <TabsTrigger 
+                          value="child"
+                          className="data-[state=active]:bg-[#3546A6] data-[state=active]:text-white"
+                        >
+                          Child
+                        </TabsTrigger>
+                        <TabsTrigger 
+                          value="details"
+                          className="data-[state=active]:bg-[#3546A6] data-[state=active]:text-white"
+                        >
+                          Details
+                        </TabsTrigger>
                       </TabsList>
 
                       {/* General Tab */}
@@ -452,41 +488,133 @@ export default function PricePage() {
                       <TabsContent value="adult" className="mt-4 space-y-4">
                         <div className="grid md:grid-cols-2 gap-4">
                           <div>
-                            <Label>Precio Adulto (USD)</Label>
-                            <Input
-                              type="number"
-                              value={pkg.adultPrice}
-                              onChange={(e) => updatePackage(pkg.id, 'adultPrice', Number(e.target.value))}
-                              className="mt-1.5"
-                              placeholder="0"
-                              min="0"
-                            />
-                          </div>
-                          <div>
                             <Label className="flex items-center gap-1">
-                              Suplemento Individual
+                              Precio de Venta
                               <Tooltip>
                                 <TooltipTrigger asChild>
                                   <HelpCircle className="w-3 h-3 text-slate-400" />
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Cargo extra para habitación individual</p>
+                                  <p>Precio final por adulto</p>
                                 </TooltipContent>
                               </Tooltip>
                             </Label>
-                            <Input
-                              type="number"
-                              value={pkg.adultSingleSupplement}
-                              onChange={(e) => updatePackage(pkg.id, 'adultSingleSupplement', Number(e.target.value))}
-                              className="mt-1.5"
-                              placeholder="0"
-                              min="0"
-                            />
+                            <div className="flex items-center gap-2 mt-1.5">
+                              <span className="px-3 py-2 bg-slate-100 border border-slate-200 rounded-md text-sm font-medium text-slate-600">
+                                USD $
+                              </span>
+                              <Input
+                                type="number"
+                                value={pkg.adultPrice}
+                                onChange={(e) => updatePackage(pkg.id, 'adultPrice', Number(e.target.value))}
+                                placeholder="250"
+                                min="0"
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <Label className="flex items-center gap-1">
+                              Precio Tachado
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <HelpCircle className="w-3 h-3 text-slate-400" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Precio antes del descuento (opcional)</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </Label>
+                            <div className="flex items-center gap-2 mt-1.5">
+                              <span className="px-3 py-2 bg-slate-100 border border-slate-200 rounded-md text-sm font-medium text-slate-600">
+                                USD $
+                              </span>
+                              <Input
+                                type="number"
+                                value={pkg.adultCrossedPrice || ''}
+                                onChange={(e) => updatePackage(pkg.id, 'adultCrossedPrice', e.target.value ? Number(e.target.value) : 0)}
+                                placeholder="320"
+                                min="0"
+                              />
+                            </div>
                           </div>
                         </div>
+
+                        <div>
+                          <Label className="flex items-center gap-1 mb-3">
+                            Número de Pasajeros
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="w-3 h-3 text-slate-400" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Cantidad mínima y máxima de adultos</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </Label>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label className="text-xs text-slate-600 mb-1.5">Min Pax.</Label>
+                              <Input
+                                type="number"
+                                value={pkg.adultMinPax}
+                                onChange={(e) => updatePackage(pkg.id, 'adultMinPax', Number(e.target.value))}
+                                placeholder="1"
+                                min="1"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-slate-600 mb-1.5">Max Pax.</Label>
+                              <Input
+                                type="number"
+                                value={pkg.adultMaxPax || ''}
+                                onChange={(e) => updatePackage(pkg.id, 'adultMaxPax', e.target.value ? Number(e.target.value) : null)}
+                                placeholder="∞"
+                                min="1"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                          <label 
+                            htmlFor={`adult-group-${pkg.id}`}
+                            className="text-sm font-medium text-slate-700 cursor-pointer"
+                          >
+                            Descuento Grupal
+                          </label>
+                          <Switch
+                            id={`adult-group-${pkg.id}`}
+                            checked={pkg.adultGroupDiscount}
+                            onCheckedChange={(checked) => updatePackage(pkg.id, 'adultGroupDiscount', checked)}
+                          />
+                        </div>
+
+                        <div className="border-t pt-4">
+                          <Label>Suplemento Individual (USD)</Label>
+                          <Input
+                            type="number"
+                            value={pkg.adultSingleSupplement}
+                            onChange={(e) => updatePackage(pkg.id, 'adultSingleSupplement', Number(e.target.value))}
+                            className="mt-1.5"
+                            placeholder="0"
+                            min="0"
+                          />
+                          <p className="text-xs text-slate-500 mt-1">
+                            Cargo extra para habitación individual
+                          </p>
+                        </div>
+
                         <div className="p-3 bg-blue-50 rounded-lg">
                           <p className="text-sm text-blue-700">
-                            <strong>Vista previa:</strong> ${pkg.adultPrice.toLocaleString()} USD por adulto
+                            <strong>Vista previa:</strong> 
+                            {pkg.adultCrossedPrice && pkg.adultCrossedPrice > 0 && (
+                              <span className="line-through text-slate-500 ml-1">
+                                ${pkg.adultCrossedPrice.toLocaleString()} USD
+                              </span>
+                            )}
+                            <span className="ml-1 font-semibold">
+                              ${pkg.adultPrice.toLocaleString()} USD por adulto
+                            </span>
                             {pkg.adultSingleSupplement > 0 && (
                               <span className="block text-xs mt-1">
                                 +${pkg.adultSingleSupplement.toLocaleString()} suplemento individual
@@ -498,39 +626,134 @@ export default function PricePage() {
 
                       {/* Child Tab */}
                       <TabsContent value="child" className="mt-4 space-y-4">
-                        <div className="grid md:grid-cols-3 gap-4">
+                        <div className="grid md:grid-cols-2 gap-4">
                           <div>
-                            <Label>Precio Niño (USD)</Label>
-                            <Input
-                              type="number"
-                              value={pkg.childPrice}
-                              onChange={(e) => updatePackage(pkg.id, 'childPrice', Number(e.target.value))}
-                              className="mt-1.5"
-                              placeholder="0"
-                              min="0"
-                            />
+                            <Label className="flex items-center gap-1">
+                              Precio de Venta
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <HelpCircle className="w-3 h-3 text-slate-400" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Precio final por niño</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </Label>
+                            <div className="flex items-center gap-2 mt-1.5">
+                              <span className="px-3 py-2 bg-slate-100 border border-slate-200 rounded-md text-sm font-medium text-slate-600">
+                                USD $
+                              </span>
+                              <Input
+                                type="number"
+                                value={pkg.childPrice}
+                                onChange={(e) => updatePackage(pkg.id, 'childPrice', Number(e.target.value))}
+                                placeholder="150"
+                                min="0"
+                              />
+                            </div>
                           </div>
                           <div>
-                            <Label>Edad Mínima</Label>
-                            <Input
-                              type="number"
-                              value={pkg.childAgeMin}
-                              onChange={(e) => updatePackage(pkg.id, 'childAgeMin', Number(e.target.value))}
-                              className="mt-1.5"
-                              placeholder="3"
-                              min="0"
-                            />
+                            <Label className="flex items-center gap-1">
+                              Precio Tachado
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <HelpCircle className="w-3 h-3 text-slate-400" />
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>Precio antes del descuento (opcional)</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            </Label>
+                            <div className="flex items-center gap-2 mt-1.5">
+                              <span className="px-3 py-2 bg-slate-100 border border-slate-200 rounded-md text-sm font-medium text-slate-600">
+                                USD $
+                              </span>
+                              <Input
+                                type="number"
+                                value={pkg.childCrossedPrice || ''}
+                                onChange={(e) => updatePackage(pkg.id, 'childCrossedPrice', e.target.value ? Number(e.target.value) : 0)}
+                                placeholder="200"
+                                min="0"
+                              />
+                            </div>
                           </div>
-                          <div>
-                            <Label>Edad Máxima</Label>
-                            <Input
-                              type="number"
-                              value={pkg.childAgeMax}
-                              onChange={(e) => updatePackage(pkg.id, 'childAgeMax', Number(e.target.value))}
-                              className="mt-1.5"
-                              placeholder="11"
-                              min="0"
-                            />
+                        </div>
+
+                        <div>
+                          <Label className="flex items-center gap-1 mb-3">
+                            Número de Pasajeros
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <HelpCircle className="w-3 h-3 text-slate-400" />
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Cantidad mínima y máxima de niños</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </Label>
+                          <div className="grid grid-cols-2 gap-4">
+                            <div>
+                              <Label className="text-xs text-slate-600 mb-1.5">Min Pax.</Label>
+                              <Input
+                                type="number"
+                                value={pkg.childMinPax}
+                                onChange={(e) => updatePackage(pkg.id, 'childMinPax', Number(e.target.value))}
+                                placeholder="1"
+                                min="0"
+                              />
+                            </div>
+                            <div>
+                              <Label className="text-xs text-slate-600 mb-1.5">Max Pax.</Label>
+                              <Input
+                                type="number"
+                                value={pkg.childMaxPax || ''}
+                                onChange={(e) => updatePackage(pkg.id, 'childMaxPax', e.target.value ? Number(e.target.value) : null)}
+                                placeholder="∞"
+                                min="0"
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center justify-between p-4 bg-slate-50 border border-slate-200 rounded-lg">
+                          <label 
+                            htmlFor={`child-group-${pkg.id}`}
+                            className="text-sm font-medium text-slate-700 cursor-pointer"
+                          >
+                            Descuento Grupal
+                          </label>
+                          <Switch
+                            id={`child-group-${pkg.id}`}
+                            checked={pkg.childGroupDiscount}
+                            onCheckedChange={(checked) => updatePackage(pkg.id, 'childGroupDiscount', checked)}
+                          />
+                        </div>
+
+                        <div className="border-t pt-4">
+                          <h4 className="text-sm font-medium text-slate-700 mb-3">Rango de Edad</h4>
+                          <div className="grid md:grid-cols-2 gap-4">
+                            <div>
+                              <Label>Edad Mínima</Label>
+                              <Input
+                                type="number"
+                                value={pkg.childAgeMin}
+                                onChange={(e) => updatePackage(pkg.id, 'childAgeMin', Number(e.target.value))}
+                                className="mt-1.5"
+                                placeholder="3"
+                                min="0"
+                              />
+                            </div>
+                            <div>
+                              <Label>Edad Máxima</Label>
+                              <Input
+                                type="number"
+                                value={pkg.childAgeMax}
+                                onChange={(e) => updatePackage(pkg.id, 'childAgeMax', Number(e.target.value))}
+                                className="mt-1.5"
+                                placeholder="11"
+                                min="0"
+                              />
+                            </div>
                           </div>
                         </div>
 
@@ -564,7 +787,15 @@ export default function PricePage() {
 
                         <div className="p-3 bg-green-50 rounded-lg">
                           <p className="text-sm text-green-700">
-                            <strong>Niños ({pkg.childAgeMin}-{pkg.childAgeMax} años):</strong> ${pkg.childPrice.toLocaleString()} USD
+                            <strong>Niños ({pkg.childAgeMin}-{pkg.childAgeMax} años):</strong> 
+                            {pkg.childCrossedPrice && pkg.childCrossedPrice > 0 && (
+                              <span className="line-through text-slate-500 ml-1">
+                                ${pkg.childCrossedPrice.toLocaleString()} USD
+                              </span>
+                            )}
+                            <span className="ml-1 font-semibold">
+                              ${pkg.childPrice.toLocaleString()} USD
+                            </span>
                           </p>
                           <p className="text-sm text-green-700 mt-1">
                             <strong>Infantes (0-{pkg.infantAgeMax} años):</strong> ${pkg.infantPrice.toLocaleString()} USD
@@ -591,6 +822,15 @@ export default function PricePage() {
             </Collapsible>
           ))}
 
+          {/* Add New Package Button */}
+          <Button
+            variant="outline"
+            onClick={addPackage}
+            className="w-full border-dashed border-2 border-slate-300 hover:border-[#3546A6] hover:bg-slate-50 h-12"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add New Package
+          </Button>
         </div>
 
         {/* Starting Price - Optional */}

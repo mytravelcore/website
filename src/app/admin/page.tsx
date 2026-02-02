@@ -1,40 +1,35 @@
-import { redirect } from 'next/navigation';
-import AdminLayout from "./components/admin-layout";
 import { createClient } from "@/supabase/server";
+import AdminDashboard from "./components/admin-dashboard-new";
 
 export const metadata = {
   title: 'Admin | TravelCore',
-  description: 'Panel de administración de tours.',
+  description: 'Panel de administración de TravelCore.',
 };
 
 export default async function AdminPage() {
   const supabase = await createClient();
   
-  // TEMPORARY: Authentication disabled for development
-  // const { data: { user } } = await supabase.auth.getUser();
-  // if (!user) {
-  //   redirect('/sign-in');
-  // }
-
-  // Fetch all tours with destinations
-  const { data: tours } = await supabase
-    .from('tours')
-    .select(`
-      *,
-      destination:destinations(*)
-    `)
-    .order('created_at', { ascending: false });
-
-  // Fetch all destinations for the form
-  const { data: destinations } = await supabase
-    .from('destinations')
-    .select('*')
-    .order('name');
+  // Fetch all data for dashboard
+  const [toursResult, destinationsResult, activitiesResult] = await Promise.all([
+    supabase
+      .from('tours')
+      .select(`*, destination:destinations(*)`)
+      .order('created_at', { ascending: false }),
+    supabase
+      .from('destinations')
+      .select('*')
+      .order('name'),
+    supabase
+      .from('activities')
+      .select('*')
+      .order('name'),
+  ]);
 
   return (
-    <AdminLayout 
-      initialTours={tours || []} 
-      destinations={destinations || []}
+    <AdminDashboard 
+      initialTours={toursResult.data || []} 
+      initialDestinations={destinationsResult.data || []}
+      initialActivities={activitiesResult.data || []}
     />
   );
 }

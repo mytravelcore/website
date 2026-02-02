@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
-import { X, Loader2, Plus, Trash2 } from 'lucide-react';
+import { X, Loader2, Plus, Trash2, Link2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -356,12 +356,34 @@ export default function TourFormModal({
 
           {/* Hero Image */}
           <div>
-            <Label htmlFor="hero_image_url">URL de imagen principal</Label>
-            <Input
-              id="hero_image_url"
-              {...register('hero_image_url')}
-              className="mt-1.5"
-              placeholder="https://..."
+            <Label className="mb-2 block">Imagen principal</Label>
+            
+            {watch('hero_image_url') && (
+              <div className="relative w-full h-40 rounded-lg overflow-hidden bg-slate-100 mb-3">
+                <img 
+                  src={watch('hero_image_url')}
+                  alt="Hero preview"
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23f1f5f9" width="100" height="100"/><text x="50" y="50" text-anchor="middle" dy=".3em" fill="%2394a3b8" font-size="12">Error</text></svg>';
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => setValue('hero_image_url', '')}
+                  className="absolute top-2 right-2 w-6 h-6 bg-white/80 text-slate-600 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            )}
+            
+            <ImageUpload
+              onImageUpload={(url) => {
+                setValue('hero_image_url', url);
+              }}
+              label="URL de imagen hero"
+              placeholder="https://images.unsplash.com/..."
             />
           </div>
 

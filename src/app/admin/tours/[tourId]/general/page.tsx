@@ -3,7 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
-import { Save, Loader2, Plus, ExternalLink, X, HelpCircle, Upload } from 'lucide-react';
+import type { PostgrestError } from '@supabase/supabase-js';
+import { Save, Loader2, Plus, ExternalLink, X, HelpCircle, Link2 } from 'lucide-react';
+import ImageUpload from '@/components/admin/image-upload';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -58,7 +60,9 @@ export default function GeneralPage() {
   const [destinations, setDestinations] = useState<Destination[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [loadError, setLoadError] = useState<PostgrestError | null>(null);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
+  const [heroImageUrl, setHeroImageUrl] = useState<string>('');
   
   // Custom options state (extend defaults)
   const [customDestinations, setCustomDestinations] = useState<string[]>([]);
@@ -108,14 +112,18 @@ export default function GeneralPage() {
       ]);
 
       if (tourResult.error || !tourResult.data) {
-        router.push('/admin/tours');
+        setLoadError(tourResult.error ?? null);
+        setLoading(false);
         return;
       }
+
+      setLoadError(null);
 
       const tourData = tourResult.data;
       setTour(tourData);
       setDestinations(destResult.data || []);
       setGalleryImages(tourData.gallery_image_urls || []);
+      setHeroImageUrl(tourData.hero_image_url || '');
       setDurationDays(tourData.duration_days || 1);
       setTourType(tourData.duration_days > 1 ? 'multiday' : 'activity');
       setAgeRange([tourData.age_min || 10, tourData.age_max || 70]);
@@ -163,6 +171,7 @@ export default function GeneralPage() {
           age_max: ageRange[1],
           tour_label: data.tour_label || null,
           gallery_image_urls: galleryImages,
+          hero_image_url: heroImageUrl || null,
         })
         .eq('id', tourId);
 
@@ -184,11 +193,6 @@ export default function GeneralPage() {
     } finally {
       setIsSaving(false);
     }
-  };
-
-  const addGalleryImage = () => {
-    const url = prompt('Ingresa la URL de la imagen:');
-    if (url) setGalleryImages([...galleryImages, url]);
   };
 
   const removeGalleryImage = (index: number) => {
@@ -244,6 +248,21 @@ export default function GeneralPage() {
     );
   }
 
+  if (!tour) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-6">
+        <h2 className="text-base font-semibold text-slate-900">No se pudo cargar el tour</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          {loadError?.message ?? 'Vuelve a intentarlo o regresa a la lista de tours.'}
+        </p>
+        <div className="mt-4 flex gap-2">
+          <Button variant="outline" onClick={() => router.push('/admin')}>Volver</Button>
+          <Button onClick={() => window.location.reload()}>Reintentar</Button>
+        </div>
+      </div>
+    );
+  }
+
   const tourUrl = slug ? `https://travelcore.ontripcart.com/tour/${slug}/` : '';
 
   return (
@@ -261,6 +280,39 @@ export default function GeneralPage() {
                 placeholder="Nombre del tour"
               />
               {errors.title && <p className="text-red-500 text-sm mt-1">{errors.title.message}</p>}
+            </div>
+
+            {/* Hero Image */}
+            <div>
+              <Label className="text-slate-600 font-medium mb-3 block">Imagen principal (Hero)</Label>
+              
+              {heroImageUrl ? (
+                <div className="relative w-full h-48 rounded-lg overflow-hidden bg-slate-100 mb-3">
+                  <img 
+                    src={heroImageUrl}
+                    alt="Hero preview"
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23f1f5f9" width="100" height="100"/><text x="50" y="50" text-anchor="middle" dy=".3em" fill="%2394a3b8" font-size="12">Error</text></svg>';
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setHeroImageUrl('')}
+                    className="absolute top-2 right-2 w-8 h-8 bg-white/80 text-slate-600 rounded-full flex items-center justify-center hover:bg-red-500 hover:text-white transition-colors"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+              ) : null}
+              
+              <ImageUpload
+                onImageUpload={(url) => {
+                  setHeroImageUrl(url);
+                }}
+                label="URL de imagen principal"
+                placeholder="https://images.unsplash.com/..."
+              />
             </div>
 
             {/* Link */}
@@ -563,16 +615,19 @@ export default function GeneralPage() {
         </div>
 
         {/* Gallery - Right Side */}
-        <div className="w-72">
-          <Label className="text-slate-600 font-medium">Agregar galería</Label>
-          <button
-            type="button"
-            onClick={addGalleryImage}
-            className="mt-2 w-full h-32 border-2 border-dashed border-slate-200 rounded-lg flex flex-col items-center justify-center text-[#3B82F6] hover:border-[#3B82F6] hover:bg-[#3B82F6]/5 transition-colors"
-          >
-            <Upload className="w-8 h-8 mb-2" />
-            <span className="text-sm font-medium">Abrir galería de imágenes</span>
-          </button>
+        <div className="w-80">
+          <Label className="text-slate-600 font-medium mb-3 block">Agregar imagen a galería</Label>
+          
+          {/* URL Image Upload */}
+          <div className="mb-4">
+            <ImageUpload
+              onImageUpload={(url) => {
+                setGalleryImages([...galleryImages, url]);
+              }}
+              label="Agregar desde URL"
+              placeholder="https://images.unsplash.com/..."
+            />
+          </div>
           
           {/* Gallery Grid */}
           {galleryImages.length > 0 && (
@@ -583,6 +638,9 @@ export default function GeneralPage() {
                     src={url} 
                     alt={`Gallery ${index + 1}`} 
                     className="w-full h-full object-cover rounded-lg"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23f1f5f9" width="100" height="100"/><text x="50" y="50" text-anchor="middle" dy=".3em" fill="%2394a3b8" font-size="12">Error</text></svg>';
+                    }}
                   />
                   <button
                     type="button"

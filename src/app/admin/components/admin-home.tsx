@@ -121,8 +121,8 @@ export default function AdminHome({ tours, destinations, onNavigateToTours }: Ad
 
   const handleSectionChange = (section: string) => {
     if (section === 'all-tours') {
-      // Navigate to the new tours list page with loading indicator
-      navigateTo('/admin/tours');
+      // Navigate to the main admin dashboard
+      navigateTo('/admin');
     } else {
       setActiveSection(section);
     }

@@ -104,7 +104,7 @@ export default function DatesPage() {
         .single();
 
       if (tourError || !tourData) {
-        router.push('/admin/tours');
+        setLoading(false);
         return;
       }
 
@@ -367,6 +367,21 @@ export default function DatesPage() {
     );
   }
 
+  if (!tour) {
+    return (
+      <div className="rounded-xl border border-slate-200 bg-white p-6">
+        <h2 className="text-base font-semibold text-slate-900">No se pudo cargar el tour</h2>
+        <p className="mt-2 text-sm text-slate-600">
+          Vuelve a intentarlo o regresa a la lista de tours.
+        </p>
+        <div className="mt-4 flex gap-2">
+          <Button variant="outline" onClick={() => router.push('/admin')}>Volver</Button>
+          <Button onClick={() => window.location.reload()}>Reintentar</Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl">
       {/* Header */}
@@ -478,43 +493,88 @@ export default function DatesPage() {
                     </TabsList>
 
                     {/* General Tab */}
-                    <TabsContent value="general" className="mt-4 space-y-4">
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <Label className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4" />
-                            Fecha de inicio
-                          </Label>
-                          <Input
-                            type="date"
-                            value={date.starting_date}
-                            onChange={(e) => updateDate(date.id, 'starting_date', e.target.value)}
-                            className="mt-1.5"
-                          />
-                        </div>
-                        <div>
-                          <Label className="flex items-center gap-2">
-                            <Clock className="w-4 h-4" />
-                            Tiempo de cierre (Días)
-                          </Label>
+                    <TabsContent value="general" className="mt-4 space-y-6">
+                      {/* Cutoff Time */}
+                      <div>
+                        <Label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                          <Clock className="w-4 h-4" />
+                          Cut Off Time
+                        </Label>
+                        <div className="flex items-center gap-2 mt-2">
                           <Input
                             type="number"
                             value={date.cutoff_days}
                             onChange={(e) => updateDate(date.id, 'cutoff_days', Number(e.target.value))}
-                            className="mt-1.5"
+                            className="w-24"
                             min="0"
-                            placeholder="7"
+                            placeholder="10"
                           />
-                          <p className="text-xs text-slate-500 mt-1">Días antes del tour para cerrar reservas</p>
+                          <span className="text-sm text-slate-600">Day(s)</span>
                         </div>
                       </div>
 
+                      {/* Starting Dates */}
                       <div>
-                        <Label className="flex items-center gap-2">
+                        <Label className="text-sm font-medium text-slate-700">Starting Dates</Label>
+                        <Input
+                          type="date"
+                          value={date.starting_date}
+                          onChange={(e) => updateDate(date.id, 'starting_date', e.target.value)}
+                          className="mt-2"
+                        />
+                      </div>
+
+                      {/* Repeat Date Section */}
+                      <div className="border border-slate-200 rounded-lg p-4 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <Label className="text-sm font-medium text-slate-700">Repeat Date</Label>
+                          <Switch
+                            checked={date.repeat_enabled}
+                            onCheckedChange={(checked) => updateDate(date.id, 'repeat_enabled', checked)}
+                          />
+                        </div>
+
+                        {date.repeat_enabled && (
+                          <>
+                            <div>
+                              <Label className="text-sm font-medium text-slate-700 mb-3 block">Pattern</Label>
+                              <div className="space-y-2">
+                                {repeatPatterns.map((pattern) => (
+                                  <label key={pattern.value} className="flex items-center cursor-pointer">
+                                    <input
+                                      type="radio"
+                                      name={`repeat-pattern-${date.id}`}
+                                      value={pattern.value}
+                                      checked={date.repeat_pattern === pattern.value}
+                                      onChange={() => updateDate(date.id, 'repeat_pattern', pattern.value)}
+                                      className="mr-3 w-4 h-4 border-slate-300 text-[#3546A6]"
+                                    />
+                                    <span className="text-sm text-slate-700">{pattern.label}</span>
+                                  </label>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div>
+                              <Label className="text-sm font-medium text-slate-700">Repeat Until</Label>
+                              <Input
+                                type="date"
+                                value={date.repeat_until || ''}
+                                onChange={(e) => updateDate(date.id, 'repeat_until', e.target.value || null)}
+                                className="mt-2"
+                              />
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Número de Pax */}
+                      <div>
+                        <Label className="text-sm font-medium text-slate-700 flex items-center gap-2">
                           <Users className="w-4 h-4" />
                           Número de Pax (Cupos)
                         </Label>
-                        <div className="flex items-center gap-2 mt-1.5">
+                        <div className="flex items-center gap-2 mt-2">
                           <Input
                             type="number"
                             value={date.max_pax ?? ''}
@@ -532,53 +592,6 @@ export default function DatesPage() {
                             ∞ Ilimitado
                           </Button>
                         </div>
-                      </div>
-
-                      {/* Repeat Section */}
-                      <div className="border rounded-lg p-4 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <Label className="flex items-center gap-2 cursor-pointer">
-                            <Repeat className="w-4 h-4" />
-                            Repetir fecha
-                          </Label>
-                          <Switch
-                            checked={date.repeat_enabled}
-                            onCheckedChange={(checked) => updateDate(date.id, 'repeat_enabled', checked)}
-                          />
-                        </div>
-
-                        {date.repeat_enabled && (
-                          <>
-                            <div>
-                              <Label>Patrón de repetición</Label>
-                              <div className="flex flex-wrap gap-2 mt-2">
-                                {repeatPatterns.map((pattern) => (
-                                  <Button
-                                    key={pattern.value}
-                                    variant={date.repeat_pattern === pattern.value ? 'default' : 'outline'}
-                                    size="sm"
-                                    onClick={() => updateDate(date.id, 'repeat_pattern', pattern.value)}
-                                    className={cn(
-                                      date.repeat_pattern === pattern.value && "bg-[#3546A6] text-white"
-                                    )}
-                                  >
-                                    {pattern.label}
-                                  </Button>
-                                ))}
-                              </div>
-                            </div>
-
-                            <div>
-                              <Label>Repetir hasta</Label>
-                              <Input
-                                type="date"
-                                value={date.repeat_until || ''}
-                                onChange={(e) => updateDate(date.id, 'repeat_until', e.target.value || null)}
-                                className="mt-1.5"
-                              />
-                            </div>
-                          </>
-                        )}
                       </div>
                     </TabsContent>
 
