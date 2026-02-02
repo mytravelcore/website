@@ -655,7 +655,7 @@ export default function DatesPage() {
                                               e.target.value ? Number(e.target.value) : null
                                             )}
                                             className="mt-1.5"
-                                            placeholder={`Predeterminado: $${pkg.adultSellingPrice}`}
+                                            placeholder={`Predeterminado: $${pkg.adult_price}`}
                                             min="0"
                                           />
                                         </div>
