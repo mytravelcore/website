@@ -9,6 +9,7 @@ export interface Destination {
   short_description: string | null;
   long_description: string | null;
   image_url: string | null;
+  hero_image_url: string | null;
   gallery_images: string[];
   created_at: string;
   updated_at: string;
