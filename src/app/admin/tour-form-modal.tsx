@@ -120,7 +120,10 @@ export default function TourFormModal({
         featured: tour.featured,
         hero_image_url: tour.hero_image_url || "",
         // Tour details fields
-        destination_name: tour.destination || "",
+        destination_name:
+          typeof tour.destination === "string"
+            ? tour.destination
+            : (tour.destination?.name ?? ""),
         difficulty_level: tour.difficulty_level || "",
         age_min: tour.age_min ?? null,
         age_max: tour.age_max ?? null,
