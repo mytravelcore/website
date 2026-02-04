@@ -11,6 +11,7 @@ export interface Destination {
   image_url: string | null;
   hero_image_url: string | null;
   gallery_images: string[];
+  is_featured: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -54,7 +55,7 @@ export interface Tour {
   short_description: string | null;
   long_description: string | null;
   // Status
-  status: 'draft' | 'published' | 'archived';
+  status: "draft" | "published" | "archived";
   featured: boolean;
   // Images
   hero_image_url: string | null;
@@ -62,7 +63,7 @@ export interface Tour {
   gallery_image_urls?: string[];
   // Tour Details
   destination_id: string | null;
-  difficulty: 'Fácil' | 'Moderado' | 'Difícil' | 'Intenso' | null;
+  difficulty: "Fácil" | "Moderado" | "Difícil" | "Intenso" | null;
   difficulty_level?: string | null;
   duration_days: number | null;
   category: string | null;
@@ -83,7 +84,7 @@ export interface Tour {
   excludes: string[];
   faqs: FAQ[];
   // Package/Pricing config
-  package_type?: 'single' | 'multiple';
+  package_type?: "single" | "multiple";
   primary_price_category?: string;
   price_packages?: PricePackage[];
   starting_price_from?: number | null;
@@ -140,7 +141,7 @@ export interface TourDate {
   notes: string | null;
   // Repeat settings
   repeat_enabled: boolean;
-  repeat_pattern: 'daily' | 'weekly' | 'monthly' | null;
+  repeat_pattern: "daily" | "weekly" | "monthly" | null;
   repeat_until: string | null;
   created_at: string;
   updated_at: string;
@@ -203,12 +204,12 @@ export interface TourFormData {
   subtitle?: string;
   short_description?: string;
   long_description?: string;
-  status: 'draft' | 'published' | 'archived';
+  status: "draft" | "published" | "archived";
   featured: boolean;
   hero_image_url?: string;
   gallery_images: string[];
   destination_id?: string;
-  difficulty?: 'Fácil' | 'Moderado' | 'Difícil' | 'Intenso';
+  difficulty?: "Fácil" | "Moderado" | "Difícil" | "Intenso";
   duration_days?: number;
   category?: string;
   age_min?: number;
