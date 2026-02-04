@@ -86,7 +86,7 @@ export default function NavbarClient({ user, userProfile }: NavbarClientProps) {
               alt="TravelCore"
               width={120}
               height={33}
-              className="h-8 w-auto transition-opacity duration-300"
+              className="h-5 sm:h-6 md:h-8 w-auto transition-opacity duration-300"
               priority
             />
           </Link>
