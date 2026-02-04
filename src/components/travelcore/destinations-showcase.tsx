@@ -51,8 +51,8 @@ export default function DestinationsShowcase({ destinations }: DestinationsShowc
           </motion.div>
         </div>
 
-        {/* Destinations Grid - Masonry Style */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+        {/* Destinations Grid - 4 columns uniform */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 auto-rows-fr">
           {destinations.slice(0, 8).map((destination, index) => (
             <motion.div
               key={destination.id}
@@ -60,7 +60,7 @@ export default function DestinationsShowcase({ destinations }: DestinationsShowc
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1 }}
-              className={index === 0 || index === 5 ? 'md:col-span-2 md:row-span-2' : ''}
+              className="h-full"
             >
               <DestinationCard 
                 destination={destination} 

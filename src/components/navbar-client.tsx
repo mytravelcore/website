@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Button } from "./ui/button";
 import { Menu } from "lucide-react";
 import Image from "next/image";
@@ -16,6 +17,17 @@ export default function NavbarClient({ user, userProfile }: NavbarClientProps) {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isPastSecondBlock, setIsPastSecondBlock] = useState(false);
+  const pathname = usePathname();
+
+  // Check if we're in the vacacional section
+  const isInVacacional = pathname === '/vacacional' || 
+    pathname.startsWith('/tours') || 
+    pathname.startsWith('/destinos') ||
+    pathname.startsWith('/contacto') ||
+    pathname.startsWith('/quienes-somos');
+
+  // Determine the home link based on context
+  const homeLink = isInVacacional ? '/vacacional' : '/';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -64,7 +76,7 @@ export default function NavbarClient({ user, userProfile }: NavbarClientProps) {
       <div className="container mx-auto px-4 lg:px-20">
         <div className="flex justify-between items-center h-20">
           {/* Logo */}
-          <Link href="/" className="flex items-center">
+          <Link href={homeLink} className="flex items-center">
             <Image
               src={isScrolled 
                 ? "https://storage.googleapis.com/msgsndr/PfHZoaIxRooTMHzcnant/media/68a3842c1004185996b7fbc7.png"
@@ -81,7 +93,7 @@ export default function NavbarClient({ user, userProfile }: NavbarClientProps) {
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8 ml-auto">
             <Link
-              href="/"
+              href={homeLink}
               className={`transition-colors font-medium ${
                 isScrolled
                   ? "text-tc-purple-deep hover:text-tc-orange"

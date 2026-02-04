@@ -1,5 +1,7 @@
 "use client";
 
+import React from "react";
+
 import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -33,16 +35,33 @@ const portalOptions = [
   },
 ];
 
-// Subtle floating particles
+// Subtle floating particles (client-only to avoid SSR/CSR random mismatch)
 function FloatingParticles() {
-  const particles = Array.from({ length: 8 }, (_, i) => ({
-    id: i,
-    size: Math.random() * 3 + 1,
-    x: Math.random() * 100,
-    y: Math.random() * 100,
-    duration: Math.random() * 25 + 15,
-    delay: Math.random() * 5,
-  }));
+  const [particles, setParticles] = React.useState<
+    Array<{
+      id: number;
+      size: number;
+      x: number;
+      y: number;
+      duration: number;
+      delay: number;
+    }>
+  >([]);
+
+  React.useEffect(() => {
+    setParticles(
+      Array.from({ length: 8 }, (_, i) => ({
+        id: i,
+        size: Math.random() * 3 + 1,
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        duration: Math.random() * 25 + 15,
+        delay: Math.random() * 5,
+      }))
+    );
+  }, []);
+
+  if (particles.length === 0) return null;
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">

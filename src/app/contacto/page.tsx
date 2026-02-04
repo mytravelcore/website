@@ -52,8 +52,8 @@ export default function ContactoPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-tc-purple-deep mb-1">Email</h3>
-                    <a href="mailto:info@mytravelcore.com" className="text-tc-purple-deep/70 hover:text-tc-orange transition-colors">
-                      info@mytravelcore.com
+                    <a href="mailto:comercial@mytravelcore.com" className="text-tc-purple-deep/70 hover:text-tc-orange transition-colors">
+                      comercial@mytravelcore.com
                     </a>
                   </div>
                 </div>
@@ -64,8 +64,8 @@ export default function ContactoPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-tc-purple-deep mb-1">Teléfono</h3>
-                    <a href="tel:+15551234567" className="text-tc-purple-deep/70 hover:text-tc-orange transition-colors">
-                      +1 (555) 123-4567
+                    <a href="tel:+50640329444" className="text-tc-purple-deep/70 hover:text-tc-orange transition-colors">
+                      +506 4032-9444
                     </a>
                   </div>
                 </div>
@@ -77,7 +77,7 @@ export default function ContactoPage() {
                   <div>
                     <h3 className="font-semibold text-tc-purple-deep mb-1">Ubicación</h3>
                     <p className="text-tc-purple-deep/70">
-                      Miami, FL - USA
+                      San José, Costa Rica
                     </p>
                   </div>
                 </div>

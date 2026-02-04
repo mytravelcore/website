@@ -50,6 +50,7 @@ export default function DestinosListPage({ initialDestinations }: DestinosListPa
   const [formRegion, setFormRegion] = useState('');
   const [formDescription, setFormDescription] = useState('');
   const [formImageUrl, setFormImageUrl] = useState('');
+  const [formIsFeatured, setFormIsFeatured] = useState(false);
   
   const supabase = createClient();
 
@@ -85,6 +86,7 @@ export default function DestinosListPage({ initialDestinations }: DestinosListPa
     setFormRegion('');
     setFormDescription('');
     setFormImageUrl('');
+    setFormIsFeatured(false);
     setEditModalOpen(true);
   };
 
@@ -96,6 +98,7 @@ export default function DestinosListPage({ initialDestinations }: DestinosListPa
     setFormRegion(destination.region || '');
     setFormDescription(destination.short_description || '');
     setFormImageUrl(destination.hero_image_url || '');
+    setFormIsFeatured(destination.is_featured || false);
     setEditModalOpen(true);
   };
 
@@ -117,7 +120,9 @@ export default function DestinosListPage({ initialDestinations }: DestinosListPa
             country: formCountry || null,
             region: formRegion || null,
             short_description: formDescription || null,
+            image_url: formImageUrl || null,
             hero_image_url: formImageUrl || null,
+            is_featured: formIsFeatured,
           })
           .eq('id', editingDestination.id);
 
@@ -125,7 +130,7 @@ export default function DestinosListPage({ initialDestinations }: DestinosListPa
 
         setDestinations(destinations.map(d => 
           d.id === editingDestination.id 
-            ? { ...d, name: formName, slug: formSlug, country: formCountry, region: formRegion, short_description: formDescription, hero_image_url: formImageUrl }
+            ? { ...d, name: formName, slug: formSlug, country: formCountry, region: formRegion, short_description: formDescription, image_url: formImageUrl, hero_image_url: formImageUrl, is_featured: formIsFeatured }
             : d
         ));
       } else {
@@ -138,7 +143,9 @@ export default function DestinosListPage({ initialDestinations }: DestinosListPa
             country: formCountry || null,
             region: formRegion || null,
             short_description: formDescription || null,
+            image_url: formImageUrl || null,
             hero_image_url: formImageUrl || null,
+            is_featured: formIsFeatured,
           }])
           .select()
           .single();
@@ -411,6 +418,20 @@ export default function DestinosListPage({ initialDestinations }: DestinosListPa
                 label="URL de imagen del destino"
                 placeholder="https://images.unsplash.com/..."
               />
+            </div>
+
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="featured"
+                checked={formIsFeatured}
+                onCheckedChange={(checked) => setFormIsFeatured(checked as boolean)}
+              />
+              <Label 
+                htmlFor="featured"
+                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+              >
+                Destino destacado (aparecerá en la página principal)
+              </Label>
             </div>
           </div>
 

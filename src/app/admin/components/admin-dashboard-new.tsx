@@ -108,7 +108,7 @@ export default function AdminDashboard({
     country: "",
     region: "",
     short_description: "",
-    image_url: "",
+    hero_image_url: "",
   });
   const [activityForm, setActivityForm] = useState({
     name: "",
@@ -305,7 +305,7 @@ export default function AdminDashboard({
         country: destinationForm.country,
         region: destinationForm.region || null,
         short_description: destinationForm.short_description || null,
-        image_url: destinationForm.image_url || null,
+        hero_image_url: destinationForm.hero_image_url || null,
       };
 
       if (editDestination) {
@@ -328,7 +328,7 @@ export default function AdminDashboard({
       }
       setCreateDestinationOpen(false);
       setEditDestination(null);
-      setDestinationForm({ name: "", slug: "", country: "", region: "", short_description: "", image_url: "" });
+      setDestinationForm({ name: "", slug: "", country: "", region: "", short_description: "", hero_image_url: "" });
     } catch (error) {
       console.error("Error:", error);
       toast({ title: "Error al guardar el destino", variant: "destructive" });
@@ -431,7 +431,7 @@ export default function AdminDashboard({
       country: dest.country,
       region: dest.region || "",
       short_description: dest.short_description || "",
-      image_url: dest.image_url || "",
+      hero_image_url: dest.hero_image_url || "",
     });
     setEditDestination(dest);
     setCreateDestinationOpen(true);
@@ -973,7 +973,7 @@ export default function AdminDashboard({
               </div>
               <Button
                 onClick={() => {
-                  setDestinationForm({ name: "", slug: "", country: "", region: "", short_description: "", image_url: "" });
+                  setDestinationForm({ name: "", slug: "", country: "", region: "", short_description: "", hero_image_url: "" });
                   setEditDestination(null);
                   setCreateDestinationOpen(true);
                 }}
@@ -1039,8 +1039,8 @@ export default function AdminDashboard({
                           <td className="px-4 py-4">
                             <div className="flex items-center gap-3">
                               <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-100 flex-shrink-0">
-                                {dest.image_url ? (
-                                  <img src={dest.image_url} alt={dest.name} className="w-full h-full object-cover" />
+                                {dest.hero_image_url ? (
+                                  <img src={dest.hero_image_url} alt={dest.name} className="w-full h-full object-cover" />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">
                                     <MapPin className="w-5 h-5" />
@@ -1208,8 +1208,8 @@ export default function AdminDashboard({
               <Label htmlFor="dest-image">URL de Imagen</Label>
               <Input
                 id="dest-image"
-                value={destinationForm.image_url}
-                onChange={(e) => setDestinationForm({ ...destinationForm, image_url: e.target.value })}
+                value={destinationForm.hero_image_url}
+                onChange={(e) => setDestinationForm({ ...destinationForm, hero_image_url: e.target.value })}
                 placeholder="https://..."
               />
             </div>

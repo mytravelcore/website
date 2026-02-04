@@ -9,6 +9,7 @@ import DestinationsShowcase from "@/components/travelcore/destinations-showcase"
 import Testimonials from "@/components/travelcore/testimonials";
 import FAQSection from "@/components/travelcore/faq-section";
 import CTASection from "@/components/travelcore/cta-section";
+import ThreeCardsBanner from "@/components/travelcore/sports-banner";
 import { createClient } from "@/supabase/server";
 
 export default async function VacacionalPage() {
@@ -24,10 +25,11 @@ export default async function VacacionalPage() {
     .eq('featured', true)
     .limit(4);
 
-  // Fetch destinations with tour counts
+  // Fetch destinations with tour counts - only featured ones
   const { data: destinations } = await supabase
     .from('destinations')
     .select('*')
+    .eq('is_featured', true)
     .limit(8);
 
   // Get tour counts per destination
@@ -56,6 +58,7 @@ export default async function VacacionalPage() {
       <NewsletterBar />
       <FeaturedTours tours={tours || []} />
       <DestinationsShowcase destinations={destinationsWithCounts} />
+      <ThreeCardsBanner />
       <Testimonials testimonials={testimonials || []} />
       <FAQSection />
       <CTASection />

@@ -13,12 +13,12 @@ interface DestinationCardProps {
 export default function DestinationCard({ destination, tourCount = 0 }: DestinationCardProps) {
   return (
     <Link 
-      href={`/tours?destination=${destination.id}`} 
-      className="group block relative aspect-[4/5] rounded-2xl overflow-hidden"
+      href={`/destinos/${destination.slug}`} 
+      className="group block relative rounded-2xl overflow-hidden h-[400px] w-full"
     >
       {/* Background Image */}
       <Image
-        src={destination.hero_image_url || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80'}
+        src={destination.image_url || destination.hero_image_url || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80'}
         alt={destination.name}
         fill
         className="object-cover group-hover:scale-110 transition-transform duration-700"
