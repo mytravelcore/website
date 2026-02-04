@@ -123,23 +123,61 @@ export default function PricePage() {
       setTour(tourData);
       setStartingPriceFrom(tourData.starting_price_from ?? null);
       
-      // Load packages from tour data or create default
-      const savedPackages = tourData.price_packages as PricePackage[] | null;
-      if (savedPackages && savedPackages.length > 0) {
-        setPackages(savedPackages);
-        setPackageType(savedPackages.length > 1 ? 'multiple' : 'single');
-        setExpandedPackages([savedPackages[0].id]);
+      // Load packages from price_packages table (snake_case) and map to camelCase for UI
+      const { data: dbPackages, error: packagesError } = await supabase
+        .from('price_packages')
+        .select('*')
+        .eq('tour_id', tourId)
+        .order('sort_order', { ascending: true });
+
+      console.log('Price packages loaded from DB:', { dbPackages, packagesError });
+
+      if (dbPackages && dbPackages.length > 0) {
+        // Map snake_case DB columns to camelCase UI format
+        const mappedPackages: PricePackage[] = dbPackages.map((pkg: any) => ({
+          id: pkg.id,
+          name: pkg.name || 'Sin nombre',
+          label: 'Por persona',
+          isDefault: pkg.is_default || false,
+          adultPrice: Number(pkg.adult_price) || 0,
+          adultCrossedPrice: pkg.adult_crossed_price ? Number(pkg.adult_crossed_price) : undefined,
+          adultSingleSupplement: 0,
+          adultMinPax: pkg.adult_min_pax || 1,
+          adultMaxPax: pkg.adult_max_pax || null,
+          adultGroupDiscount: pkg.group_discount_enabled || false,
+          childPrice: pkg.child_price ? Number(pkg.child_price) : 0,
+          childCrossedPrice: pkg.child_crossed_price ? Number(pkg.child_crossed_price) : undefined,
+          childAgeMin: pkg.child_age_min || 3,
+          childAgeMax: pkg.child_age_max || 11,
+          childMinPax: pkg.child_min_pax || 0,
+          childMaxPax: pkg.child_max_pax || null,
+          childGroupDiscount: pkg.group_discount_enabled || false,
+          infantPrice: 0,
+          infantAgeMax: 2,
+          details: pkg.description || '',
+        }));
+        setPackages(mappedPackages);
+        setPackageType(mappedPackages.length > 1 ? 'multiple' : 'single');
+        setExpandedPackages([mappedPackages[0].id]);
       } else {
-        // Create default packages based on current price
-        const defaultPkg: PricePackage = {
-          ...defaultPackage,
-          id: crypto.randomUUID(),
-          name: 'Habitación Doble',
-          isDefault: true,
-          adultPrice: tourData.price_usd || 0,
-        };
-        setPackages([defaultPkg]);
-        setExpandedPackages([defaultPkg.id]);
+        // Fallback to JSONB packages if no table records found
+        const savedPackages = tourData.price_packages as PricePackage[] | null;
+        if (savedPackages && savedPackages.length > 0) {
+          setPackages(savedPackages);
+          setPackageType(savedPackages.length > 1 ? 'multiple' : 'single');
+          setExpandedPackages([savedPackages[0].id]);
+        } else {
+          // Create default package based on current price
+          const defaultPkg: PricePackage = {
+            ...defaultPackage,
+            id: crypto.randomUUID(),
+            name: 'Habitación Doble',
+            isDefault: true,
+            adultPrice: tourData.base_price_usd || tourData.price_usd || 0,
+          };
+          setPackages([defaultPkg]);
+          setExpandedPackages([defaultPkg.id]);
+        }
       }
       
       setPackageType(tourData.package_type || 'single');
@@ -160,6 +198,7 @@ export default function PricePage() {
       const defaultPkg = packages.find(p => p.isDefault) || packages[0];
       const mainPrice = defaultPkg?.adultPrice || 0;
 
+      // Update tours table with JSONB packages
       const { error } = await supabase
         .from('tours')
         .update({ 
@@ -172,6 +211,47 @@ export default function PricePage() {
         .eq('id', tourId);
 
       if (error) throw error;
+
+      // Also sync to price_packages table for public site
+      // First delete existing packages for this tour
+      await supabase
+        .from('price_packages')
+        .delete()
+        .eq('tour_id', tourId);
+
+      // Then insert new packages with snake_case format
+      const pricePackagesData = packages.map((pkg, index) => ({
+        id: pkg.id,
+        tour_id: tourId,
+        name: pkg.name,
+        description: pkg.details || null,
+        adult_price: pkg.adultPrice || 0,
+        adult_crossed_price: pkg.adultCrossedPrice || null,
+        adult_min_pax: pkg.adultMinPax || 1,
+        adult_max_pax: pkg.adultMaxPax || null,
+        child_price: pkg.childPrice || null,
+        child_crossed_price: pkg.childCrossedPrice || null,
+        child_min_pax: pkg.childMinPax || 0,
+        child_max_pax: pkg.childMaxPax || null,
+        child_age_min: pkg.childAgeMin || null,
+        child_age_max: pkg.childAgeMax || null,
+        group_discount_enabled: pkg.adultGroupDiscount || pkg.childGroupDiscount || false,
+        group_discount_percentage: null,
+        group_discount_min_pax: null,
+        is_default: pkg.isDefault || false,
+        is_active: true,
+        sort_order: index,
+      }));
+
+      if (pricePackagesData.length > 0) {
+        const { error: insertError } = await supabase
+          .from('price_packages')
+          .insert(pricePackagesData);
+        
+        if (insertError) {
+          console.error('Error syncing to price_packages table:', insertError);
+        }
+      }
     } catch (error) {
       console.error('Error saving price:', error);
       alert('Error al guardar el precio');

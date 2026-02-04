@@ -163,7 +163,6 @@ export default function TourDetail({ tour, relatedTours, suggestedTours, package
             .from('price_packages')
             .select('*')
             .eq('tour_id', tour.id)
-            .eq('is_active', true)
             .order('sort_order');
           if (data) setPackages(data);
         }
@@ -215,11 +214,11 @@ export default function TourDetail({ tour, relatedTours, suggestedTours, package
   const excludes = (tour.excludes || []) as string[];
   const galleryImages = [tour.hero_image_url, ...(tour.gallery_image_urls || [])].filter(Boolean) as string[];
 
-  // Calculate starting price
+  // Calculate starting price - support both camelCase and snake_case formats
   const startingPrice = useMemo(() => {
     if (tour.starting_price_from) return tour.starting_price_from;
     if (packages.length > 0) {
-      return Math.min(...packages.map(p => p.adultPrice));
+      return Math.min(...packages.map(p => p.adultPrice ?? p.adult_price ?? 0));
     }
     return tour.price_usd;
   }, [tour.starting_price_from, tour.price_usd, packages]);
@@ -799,6 +798,23 @@ export default function TourDetail({ tour, relatedTours, suggestedTours, package
                         <Button 
                           variant="ghost" 
                           size="sm"
+                          onClick={async () => {
+                            if (navigator.share) {
+                              try {
+                                await navigator.share({
+                                  title: tour.title,
+                                  text: `${tour.short_description}`,
+                                  url: window.location.href,
+                                });
+                              } catch (err) {
+                                console.log('Error sharing:', err);
+                              }
+                            } else {
+                              // Fallback: copiar URL al portapapeles
+                              await navigator.clipboard.writeText(window.location.href);
+                              alert('¡Enlace copiado al portapapeles!');
+                            }
+                          }}
                           className="flex-1 text-tc-purple-deep/60 hover:text-tc-purple-deep hover:bg-tc-purple-deep/5 rounded-lg text-xs"
                         >
                           <Share2 className="w-3.5 h-3.5 mr-1" />
@@ -807,6 +823,19 @@ export default function TourDetail({ tour, relatedTours, suggestedTours, package
                         <Button 
                           variant="ghost" 
                           size="sm"
+                          onClick={() => {
+                            // Toggle guardado en localStorage
+                            const saved = JSON.parse(localStorage.getItem('savedTours') || '[]');
+                            const tourIndex = saved.indexOf(tour.id);
+                            if (tourIndex > -1) {
+                              saved.splice(tourIndex, 1);
+                              alert('Tour eliminado de guardados');
+                            } else {
+                              saved.push(tour.id);
+                              alert('¡Tour guardado!');
+                            }
+                            localStorage.setItem('savedTours', JSON.stringify(saved));
+                          }}
                           className="flex-1 text-tc-purple-deep/60 hover:text-tc-purple-deep hover:bg-tc-purple-deep/5 rounded-lg text-xs"
                         >
                           <Heart className="w-3.5 h-3.5 mr-1" />

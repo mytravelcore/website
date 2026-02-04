@@ -271,6 +271,79 @@ export type Database = {
           },
         ]
       }
+      tour_date_blocked_dates: {
+        Row: {
+          blocked_date: string
+          created_at: string | null
+          id: string
+          tour_date_package_id: string
+        }
+        Insert: {
+          blocked_date: string
+          created_at?: string | null
+          id?: string
+          tour_date_package_id: string
+        }
+        Update: {
+          blocked_date?: string
+          created_at?: string | null
+          id?: string
+          tour_date_package_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tour_date_blocked_dates_tour_date_package_id_fkey"
+            columns: ["tour_date_package_id"]
+            isOneToOne: false
+            referencedRelation: "tour_date_packages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tour_date_packages: {
+        Row: {
+          created_at: string | null
+          enabled: boolean | null
+          id: string
+          max_pax_override: number | null
+          notes: string | null
+          package_id: string
+          price_override: number | null
+          tour_date_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          max_pax_override?: number | null
+          notes?: string | null
+          package_id: string
+          price_override?: number | null
+          tour_date_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          enabled?: boolean | null
+          id?: string
+          max_pax_override?: number | null
+          notes?: string | null
+          package_id?: string
+          price_override?: number | null
+          tour_date_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tour_date_packages_tour_date_id_fkey"
+            columns: ["tour_date_id"]
+            isOneToOne: false
+            referencedRelation: "tour_dates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tour_dates: {
         Row: {
           created_at: string | null

@@ -44,7 +44,6 @@ export default async function TourPage({ params }: { params: { slug: string } })
     .from('price_packages')
     .select('*')
     .eq('tour_id', tour.id)
-    .eq('is_active', true)
     .order('sort_order');
 
   // Fetch available tour dates with their package mappings

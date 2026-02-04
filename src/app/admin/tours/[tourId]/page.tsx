@@ -291,22 +291,71 @@ export default function UnifiedTourEditorPage() {
       // Itinerary
       setItinerary(tourData.itinerary || []);
 
-      // Prices
-      const savedPackages = tourData.price_packages as LocalPackage[] | null;
-      if (savedPackages && savedPackages.length > 0) {
+      // Prices - load from price_packages table first, fallback to JSONB
+      const { data: dbPackages, error: packagesError } = await supabase
+        .from('price_packages')
+        .select('*')
+        .eq('tour_id', tourId)
+        .order('sort_order', { ascending: true });
+      
+      console.log('Packages loaded from DB:', { dbPackages, packagesError });
+      
+      let savedPackages: LocalPackage[] = [];
+      if (dbPackages && dbPackages.length > 0) {
+        // Map snake_case DB columns to the expected LocalPackage format
+        savedPackages = dbPackages.map((pkg: any) => ({
+          id: pkg.id,
+          tour_id: pkg.tour_id,
+          name: pkg.name || 'Sin nombre',
+          description: pkg.description,
+          label: 'Por persona',
+          adult_price: Number(pkg.adult_price) || 0,
+          adult_crossed_price: pkg.adult_crossed_price ? Number(pkg.adult_crossed_price) : null,
+          adult_min_pax: pkg.adult_min_pax || 1,
+          adult_max_pax: pkg.adult_max_pax || null,
+          adultSingleSupplement: 0,
+          child_price: pkg.child_price ? Number(pkg.child_price) : null,
+          childPrice: pkg.child_price ? Number(pkg.child_price) : 0,
+          child_crossed_price: pkg.child_crossed_price ? Number(pkg.child_crossed_price) : null,
+          child_min_pax: pkg.child_min_pax || 0,
+          child_max_pax: pkg.child_max_pax || null,
+          child_age_min: pkg.child_age_min || 3,
+          child_age_max: pkg.child_age_max || 11,
+          infantPrice: 0,
+          infantAgeMax: 2,
+          group_discount_enabled: pkg.group_discount_enabled || false,
+          group_discount_percentage: pkg.group_discount_percentage || null,
+          group_discount_min_pax: pkg.group_discount_min_pax || null,
+          is_default: pkg.is_default || false,
+          is_active: pkg.is_active ?? true,
+          sort_order: pkg.sort_order || 0,
+          details: pkg.description || '',
+          created_at: pkg.created_at,
+          updated_at: pkg.updated_at,
+        }));
         setPackages(savedPackages);
         setPackageType(savedPackages.length > 1 ? 'multiple' : 'single');
         setExpandedPackages([savedPackages[0].id]);
       } else {
-        const defaultPkg: LocalPackage = {
-          ...defaultPackage,
-          id: crypto.randomUUID(),
-          name: 'Habitación Doble',
-          is_default: true,
-          adult_price: tourData.price_usd || 0,
-        };
-        setPackages([defaultPkg]);
-        setExpandedPackages([defaultPkg.id]);
+        // Fallback to JSONB packages
+        const jsonbPackages = tourData.price_packages as LocalPackage[] | null;
+        if (jsonbPackages && jsonbPackages.length > 0) {
+          savedPackages = jsonbPackages;
+          setPackages(savedPackages);
+          setPackageType(savedPackages.length > 1 ? 'multiple' : 'single');
+          setExpandedPackages([savedPackages[0].id]);
+        } else {
+          const defaultPkg: LocalPackage = {
+            ...defaultPackage,
+            id: crypto.randomUUID(),
+            name: 'Habitación Doble',
+            is_default: true,
+            adult_price: tourData.base_price_usd || tourData.price_usd || 0,
+          };
+          savedPackages = [defaultPkg];
+          setPackages(savedPackages);
+          setExpandedPackages([defaultPkg.id]);
+        }
       }
       setPackageType(tourData.package_type || 'single');
       setPrimaryCategory(tourData.primary_price_category || 'Adulto');
@@ -323,15 +372,17 @@ export default function UnifiedTourEditorPage() {
           )
         `)
         .eq('tour_id', tourId)
-        .order('starting_date', { ascending: true });
+        .order('start_date', { ascending: true });
 
-      if (datesData) {
+      console.log('Dates loaded from DB:', datesData);
+
+      if (datesData && datesData.length > 0) {
         const tourPackages = savedPackages || [];
         const formattedDates: LocalTourDate[] = datesData.map((d: any) => ({
           id: d.id,
-          starting_date: d.starting_date,
+          starting_date: d.start_date,
           cutoff_days: d.cutoff_days || 0,
-          max_pax: d.max_pax,
+          max_pax: d.max_participants,
           repeat_enabled: d.repeat_enabled || false,
           repeat_pattern: d.repeat_pattern,
           repeat_until: d.repeat_until,
@@ -347,6 +398,7 @@ export default function UnifiedTourEditorPage() {
             };
           }),
         }));
+        console.log('Setting formatted dates:', formattedDates);
         setDates(formattedDates);
         if (formattedDates.length > 0) {
           setExpandedDates([formattedDates[0].id]);
@@ -413,9 +465,9 @@ export default function UnifiedTourEditorPage() {
           .upsert({
             id: date.isNew ? undefined : date.id,
             tour_id: tourId,
-            starting_date: date.starting_date,
-            cutoff_days: date.cutoff_days,
-            max_pax: date.max_pax,
+            start_date: date.starting_date,
+            max_participants: date.max_pax,
+            is_available: true,
             repeat_enabled: date.repeat_enabled,
             repeat_pattern: date.repeat_enabled ? date.repeat_pattern : null,
             repeat_until: date.repeat_enabled ? date.repeat_until : null,
@@ -457,6 +509,41 @@ export default function UnifiedTourEditorPage() {
               );
           }
         }
+      }
+
+      // Sync packages to price_packages table for public site
+      await supabase
+        .from('price_packages')
+        .delete()
+        .eq('tour_id', tourId);
+
+      const pricePackagesData = packages.map((pkg, index) => ({
+        id: pkg.id,
+        tour_id: tourId,
+        name: pkg.name,
+        description: pkg.details || null,
+        adult_price: pkg.adult_price || 0,
+        adult_crossed_price: pkg.adult_crossed_price || null,
+        adult_min_pax: pkg.adult_min_pax || 1,
+        adult_max_pax: pkg.adult_max_pax || null,
+        child_price: pkg.child_price || null,
+        child_crossed_price: pkg.child_crossed_price || null,
+        child_min_pax: pkg.child_min_pax || 0,
+        child_max_pax: pkg.child_max_pax || null,
+        child_age_min: pkg.child_age_min || null,
+        child_age_max: pkg.child_age_max || null,
+        group_discount_enabled: false,
+        group_discount_percentage: null,
+        group_discount_min_pax: null,
+        is_default: pkg.is_default || false,
+        is_active: true,
+        sort_order: index,
+      }));
+
+      if (pricePackagesData.length > 0) {
+        await supabase
+          .from('price_packages')
+          .insert(pricePackagesData);
       }
 
       // Refresh data

@@ -110,12 +110,50 @@ export default function DatesPage() {
 
       setTour(tourData);
       
-      // Get packages from tour
-      const tourPackages = (tourData.price_packages as PricePackage[]) || [];
+      // Load packages from price_packages table first, fallback to JSONB
+      const { data: dbPackages, error: packagesError } = await supabase
+        .from('price_packages')
+        .select('*')
+        .eq('tour_id', tourId)
+        .order('sort_order', { ascending: true });
+      
+      console.log('Packages for dates loaded from DB:', { dbPackages, packagesError });
+      
+      // Map snake_case DB columns to the expected PricePackage format
+      let tourPackages: PricePackage[] = [];
+      if (dbPackages && dbPackages.length > 0) {
+        tourPackages = dbPackages.map((pkg: any) => ({
+          id: pkg.id,
+          tour_id: pkg.tour_id,
+          name: pkg.name || 'Sin nombre',
+          description: pkg.description,
+          adult_price: Number(pkg.adult_price) || 0,
+          adult_crossed_price: pkg.adult_crossed_price ? Number(pkg.adult_crossed_price) : null,
+          adult_min_pax: pkg.adult_min_pax || 1,
+          adult_max_pax: pkg.adult_max_pax || null,
+          child_price: pkg.child_price ? Number(pkg.child_price) : null,
+          child_crossed_price: pkg.child_crossed_price ? Number(pkg.child_crossed_price) : null,
+          child_min_pax: pkg.child_min_pax || 0,
+          child_max_pax: pkg.child_max_pax || null,
+          child_age_min: pkg.child_age_min || null,
+          child_age_max: pkg.child_age_max || null,
+          group_discount_enabled: pkg.group_discount_enabled || false,
+          group_discount_percentage: pkg.group_discount_percentage || null,
+          group_discount_min_pax: pkg.group_discount_min_pax || null,
+          is_default: pkg.is_default || false,
+          is_active: pkg.is_active ?? true,
+          sort_order: pkg.sort_order || 0,
+          created_at: pkg.created_at,
+          updated_at: pkg.updated_at,
+        }));
+      } else {
+        // Fallback to JSONB packages
+        tourPackages = (tourData.price_packages as PricePackage[]) || [];
+      }
       setPackages(tourPackages);
 
       // Load tour dates with package overrides
-      const { data: datesData } = await supabase
+      const { data: datesData, error: datesError } = await supabase
         .from('tour_dates')
         .select(`
           *,
@@ -125,14 +163,16 @@ export default function DatesPage() {
           )
         `)
         .eq('tour_id', tourId)
-        .order('starting_date', { ascending: true });
+        .order('start_date', { ascending: true });
 
-      if (datesData) {
+      console.log('Dates loaded:', { datesData, datesError, tourPackages });
+
+      if (datesData && datesData.length > 0) {
         const formattedDates: LocalTourDate[] = datesData.map((d: any) => ({
           id: d.id,
-          starting_date: d.starting_date,
+          starting_date: d.start_date,
           cutoff_days: d.cutoff_days || 0,
-          max_pax: d.max_pax,
+          max_pax: d.max_participants,
           repeat_enabled: d.repeat_enabled || false,
           repeat_pattern: d.repeat_pattern,
           repeat_until: d.repeat_until,
@@ -250,9 +290,9 @@ export default function DatesPage() {
           .upsert({
             id: date.isNew ? undefined : date.id,
             tour_id: tourId,
-            starting_date: date.starting_date,
-            cutoff_days: date.cutoff_days,
-            max_pax: date.max_pax,
+            start_date: date.starting_date,
+            max_participants: date.max_pax,
+            is_available: true,
             repeat_enabled: date.repeat_enabled,
             repeat_pattern: date.repeat_enabled ? date.repeat_pattern : null,
             repeat_until: date.repeat_enabled ? date.repeat_until : null,
@@ -316,14 +356,16 @@ export default function DatesPage() {
           )
         `)
         .eq('tour_id', tourId)
-        .order('starting_date', { ascending: true });
+        .order('start_date', { ascending: true });
 
-      if (datesData) {
+      console.log('Dates reloaded after save:', datesData);
+
+      if (datesData && datesData.length > 0) {
         const formattedDates: LocalTourDate[] = datesData.map((d: any) => ({
           id: d.id,
-          starting_date: d.starting_date,
+          starting_date: d.start_date,
           cutoff_days: d.cutoff_days || 0,
-          max_pax: d.max_pax,
+          max_pax: d.max_participants,
           repeat_enabled: d.repeat_enabled || false,
           repeat_pattern: d.repeat_pattern,
           repeat_until: d.repeat_until,

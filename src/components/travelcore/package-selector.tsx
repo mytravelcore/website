@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { Check, Users, User } from 'lucide-react';
 import type { PricingPackage } from '@/types/database';
@@ -11,20 +11,29 @@ interface PackageSelectorProps {
   onSelectPackage: (packageId: string) => void;
 }
 
+// Helper to normalize package data (handles both camelCase from JSONB and snake_case from table)
+function normalizePackage(pkg: PricingPackage) {
+  return {
+    id: pkg.id,
+    name: pkg.name,
+    isDefault: pkg.isDefault ?? pkg.is_default ?? false,
+    adultPrice: pkg.adultPrice ?? pkg.adult_price ?? 0,
+  };
+}
+
 export default function PackageSelector({ 
   packages, 
   selectedPackageId, 
   onSelectPackage 
 }: PackageSelectorProps) {
-  // PricingPackage doesn't have is_active/sort_order, use all packages
-  const activePackages = packages;
+  const activePackages = useMemo(() => (packages ?? []).map(normalizePackage), [packages]);
 
   // Auto-select if only one package
   useEffect(() => {
     if (activePackages.length === 1 && !selectedPackageId) {
       onSelectPackage(activePackages[0].id);
     }
-  }, [activePackages, selectedPackageId, onSelectPackage]);
+  }, [activePackages.length, activePackages, selectedPackageId, onSelectPackage]);
 
   if (activePackages.length === 0) return null;
 

@@ -165,15 +165,23 @@ export interface PricingPackage {
   id: string;
   name: string;
   label?: string;
-  isDefault: boolean;
-  adultPrice: number;
+  isDefault?: boolean;
+  is_default?: boolean;
+  adultPrice?: number;
+  adult_price?: number;
   adultSingleSupplement?: number;
   childPrice?: number;
+  child_price?: number;
   childAgeMin?: number;
+  child_age_min?: number;
   childAgeMax?: number;
+  child_age_max?: number;
   infantPrice?: number;
   infantAgeMax?: number;
   details?: string;
+  description?: string | null;
+  sort_order?: number;
+  is_active?: boolean;
 }
 
 export interface Testimonial {

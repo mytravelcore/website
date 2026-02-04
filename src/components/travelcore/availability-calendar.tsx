@@ -100,7 +100,9 @@ export default function AvailabilityCalendar({
     if (!selectedPackageId || !selectedPackage) return null;
     
     const datePackage = date.date_packages?.find(dp => dp.package_id === selectedPackageId);
-    return datePackage?.price_override || selectedPackage.adultPrice;
+    // Support both camelCase and snake_case formats
+    const basePrice = selectedPackage.adultPrice ?? selectedPackage.adult_price ?? 0;
+    return datePackage?.price_override || basePrice;
   };
 
   if (availableDates.length === 0) {

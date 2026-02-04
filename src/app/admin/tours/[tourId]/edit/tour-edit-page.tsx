@@ -228,7 +228,7 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
   // Load dates on mount
   useEffect(() => {
     async function loadDates() {
-      const { data: datesData } = await supabase
+      const { data: datesData, error: datesError } = await supabase
         .from('tour_dates')
         .select(`
           *,
@@ -238,14 +238,16 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
           )
         `)
         .eq('tour_id', initialTour.id)
-        .order('starting_date', { ascending: true });
+        .order('start_date', { ascending: true });
 
-      if (datesData) {
+      console.log('Edit page dates loaded:', { datesData, datesError });
+
+      if (datesData && datesData.length > 0) {
         const formattedDates: LocalTourDate[] = datesData.map((d: any) => ({
           id: d.id,
-          starting_date: d.starting_date,
+          starting_date: d.start_date,
           cutoff_days: d.cutoff_days || 0,
-          max_pax: d.max_pax,
+          max_pax: d.max_participants,
           repeat_enabled: d.repeat_enabled || false,
           repeat_pattern: d.repeat_pattern,
           repeat_until: d.repeat_until,
@@ -476,9 +478,9 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
           .upsert({
             id: date.isNew ? undefined : date.id,
             tour_id: tour.id,
-            starting_date: date.starting_date,
-            cutoff_days: date.cutoff_days,
-            max_pax: date.max_pax,
+            start_date: date.starting_date,
+            max_participants: date.max_pax,
+            is_available: true,
             repeat_enabled: date.repeat_enabled,
             repeat_pattern: date.repeat_enabled ? date.repeat_pattern : null,
             repeat_until: date.repeat_enabled ? date.repeat_until : null,

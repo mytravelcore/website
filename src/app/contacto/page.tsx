@@ -92,7 +92,7 @@ export default function ContactoPage() {
                   Escríbenos directamente y te responderemos en minutos.
                 </p>
                 <Link 
-                  href="https://wa.me/1234567890?text=Hola,%20quiero%20información%20sobre%20tours"
+                  href="https://wa.me/50670281812?text=Hola,%20quiero%20información%20sobre%20tours"
                   target="_blank"
                 >
                   <Button className="gradient-orange text-white border-0 rounded-full">
