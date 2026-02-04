@@ -17,6 +17,7 @@ export default function NavbarClient({ user, userProfile }: NavbarClientProps) {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isPastSecondBlock, setIsPastSecondBlock] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
 
   // Check if we're in the vacacional section
@@ -182,13 +183,75 @@ export default function NavbarClient({ user, userProfile }: NavbarClientProps) {
 
           {/* Mobile Menu Button */}
           <button
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             className={`md:hidden p-2 ${
               isScrolled ? "text-tc-purple-deep" : "text-white"
             }`}
+            aria-label="Toggle menu"
           >
             <Menu className="w-6 h-6" />
           </button>
         </div>
+
+        {/* Mobile Menu Dropdown */}
+        {isMobileMenuOpen && (
+          <div className="md:hidden absolute top-full left-0 right-0 bg-white/95 backdrop-blur-md border-b border-tc-purple-light/20 shadow-lg">
+            <div className="flex flex-col py-4 px-4 gap-4">
+              <Link
+                href={homeLink}
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-tc-purple-deep hover:text-tc-orange transition-colors font-medium py-2"
+              >
+                Inicio
+              </Link>
+              <Link
+                href="/tours"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-tc-purple-deep hover:text-tc-orange transition-colors font-medium py-2"
+              >
+                Tours
+              </Link>
+              <Link
+                href="/destinos"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-tc-purple-deep hover:text-tc-orange transition-colors font-medium py-2"
+              >
+                Destinos
+              </Link>
+              <Link
+                href="/contacto"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-tc-purple-deep hover:text-tc-orange transition-colors font-medium py-2"
+              >
+                Contacto
+              </Link>
+              <Link
+                href="/quienes-somos"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-tc-purple-deep hover:text-tc-orange transition-colors font-medium py-2"
+              >
+                Sobre nosotros
+              </Link>
+              <Link
+                href="/portal"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="text-tc-purple-deep hover:text-tc-orange transition-colors font-medium py-2"
+              >
+                Portal
+              </Link>
+              {user && (
+                <Link
+                  href="/dashboard"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  <Button className="w-full gradient-orange text-white">
+                    Dashboard
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </nav>
   );
