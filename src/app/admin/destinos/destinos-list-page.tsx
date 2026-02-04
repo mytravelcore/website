@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { createClient } from '@/supabase/client';
 import type { Destination } from '@/types/database';
 import {
@@ -97,7 +98,7 @@ export default function DestinosListPage({ initialDestinations }: DestinosListPa
     setFormCountry(destination.country || '');
     setFormRegion(destination.region || '');
     setFormDescription(destination.short_description || '');
-    setFormImageUrl(destination.hero_image_url || '');
+    setFormImageUrl(destination.image_url || destination.hero_image_url || '');
     setFormIsFeatured(destination.is_featured || false);
     setEditModalOpen(true);
   };
@@ -384,7 +385,17 @@ export default function DestinosListPage({ initialDestinations }: DestinosListPa
             </div>
 
             <div>
-              <Label>Descripción</Label>
+              <Label>URL de Imagen</Label>
+              <Input
+                value={formImageUrl}
+                onChange={(e) => setFormImageUrl(e.target.value)}
+                placeholder="https://..."
+                className="mt-1"
+              />
+            </div>
+
+            <div>
+              <Label>Descripción corta</Label>
               <Textarea
                 value={formDescription}
                 onChange={(e) => setFormDescription(e.target.value)}
@@ -420,18 +431,23 @@ export default function DestinosListPage({ initialDestinations }: DestinosListPa
               />
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Checkbox
+            <div className="flex items-center justify-between space-x-2 pt-2 pb-2 px-4 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="flex-1">
+                <Label 
+                  htmlFor="featured"
+                  className="text-sm font-medium leading-tight cursor-pointer"
+                >
+                  Destino destacado
+                </Label>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Aparecerá en la página principal
+                </p>
+              </div>
+              <Switch
                 id="featured"
                 checked={formIsFeatured}
-                onCheckedChange={(checked) => setFormIsFeatured(checked as boolean)}
+                onCheckedChange={(checked) => setFormIsFeatured(checked)}
               />
-              <Label 
-                htmlFor="featured"
-                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-              >
-                Destino destacado (aparecerá en la página principal)
-              </Label>
             </div>
           </div>
 
