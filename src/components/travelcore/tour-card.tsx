@@ -1,21 +1,22 @@
 "use client";
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { Clock, MapPin, TrendingUp, ArrowRight } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import type { Tour } from '@/types/database';
+import Link from "next/link";
+import Image from "next/image";
+import { Clock, MapPin, TrendingUp, ArrowRight } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import type { Tour } from "@/types/database";
 
 interface TourCardProps {
   tour: Tour;
 }
 
 const difficultyColors = {
-  'Fácil': 'bg-green-100 text-green-700',
-  'Moderado': 'bg-yellow-100 text-yellow-700',
-  'Intenso': 'bg-red-100 text-red-700',
-};
+  Fácil: "bg-green-100 text-green-700",
+  Moderado: "bg-yellow-100 text-yellow-700",
+  Difícil: "bg-orange-100 text-orange-700",
+  Intenso: "bg-red-100 text-red-700",
+} as const;
 
 export default function TourCard({ tour }: TourCardProps) {
   return (
@@ -24,13 +25,16 @@ export default function TourCard({ tour }: TourCardProps) {
         {/* Image Container */}
         <div className="relative aspect-[16/10] overflow-hidden">
           <Image
-            src={tour.hero_image_url || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80'}
+            src={
+              tour.hero_image_url ||
+              "https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=800&q=80"
+            }
             alt={tour.title}
             fill
             className="object-cover group-hover:scale-110 transition-transform duration-500"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
-          
+
           {/* Badges */}
           <div className="absolute top-4 left-4 flex gap-2">
             {tour.featured && (
@@ -39,12 +43,15 @@ export default function TourCard({ tour }: TourCardProps) {
               </Badge>
             )}
             {tour.category && (
-              <Badge variant="secondary" className="bg-white/90 text-tc-purple-deep">
+              <Badge
+                variant="secondary"
+                className="bg-white/90 text-tc-purple-deep"
+              >
                 {tour.category}
               </Badge>
             )}
           </div>
-          
+
           {/* Price Tag */}
           <div className="absolute bottom-4 right-4">
             <div className="bg-white rounded-lg px-3 py-1.5 shadow-lg">
@@ -61,7 +68,7 @@ export default function TourCard({ tour }: TourCardProps) {
           <h3 className="font-display text-xl font-bold text-tc-purple-deep mb-2 group-hover:text-tc-orange transition-colors line-clamp-2">
             {tour.title}
           </h3>
-          
+
           <p className="text-tc-purple-deep/60 text-sm mb-4 line-clamp-2">
             {tour.short_description}
           </p>
@@ -83,7 +90,9 @@ export default function TourCard({ tour }: TourCardProps) {
             {tour.difficulty && (
               <div className="flex items-center gap-1.5 text-sm">
                 <TrendingUp className="w-4 h-4 text-tc-orange" />
-                <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${difficultyColors[tour.difficulty]}`}>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-xs font-medium ${difficultyColors[tour.difficulty]}`}
+                >
                   {tour.difficulty}
                 </span>
               </div>
@@ -91,8 +100,8 @@ export default function TourCard({ tour }: TourCardProps) {
           </div>
 
           {/* CTA */}
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             className="w-full justify-between text-tc-purple-deep hover:text-tc-orange hover:bg-tc-lilac/20 group/btn"
           >
             Ver tour
