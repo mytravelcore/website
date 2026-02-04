@@ -55,6 +55,7 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "@/components/ui/use-toast";
 
 // Navigation tabs
@@ -108,7 +109,8 @@ export default function AdminDashboard({
     country: "",
     region: "",
     short_description: "",
-    hero_image_url: "",
+    image_url: "",
+    is_featured: false,
   });
   const [activityForm, setActivityForm] = useState({
     name: "",
@@ -305,7 +307,8 @@ export default function AdminDashboard({
         country: destinationForm.country,
         region: destinationForm.region || null,
         short_description: destinationForm.short_description || null,
-        hero_image_url: destinationForm.hero_image_url || null,
+        image_url: destinationForm.image_url || null,
+        is_featured: destinationForm.is_featured,
       };
 
       if (editDestination) {
@@ -328,7 +331,7 @@ export default function AdminDashboard({
       }
       setCreateDestinationOpen(false);
       setEditDestination(null);
-      setDestinationForm({ name: "", slug: "", country: "", region: "", short_description: "", hero_image_url: "" });
+      setDestinationForm({ name: "", slug: "", country: "", region: "", short_description: "", image_url: "", is_featured: false });
     } catch (error) {
       console.error("Error:", error);
       toast({ title: "Error al guardar el destino", variant: "destructive" });
@@ -431,7 +434,8 @@ export default function AdminDashboard({
       country: dest.country,
       region: dest.region || "",
       short_description: dest.short_description || "",
-      hero_image_url: dest.hero_image_url || "",
+      image_url: dest.image_url || dest.hero_image_url || "",
+      is_featured: dest.is_featured || false,
     });
     setEditDestination(dest);
     setCreateDestinationOpen(true);
@@ -973,7 +977,7 @@ export default function AdminDashboard({
               </div>
               <Button
                 onClick={() => {
-                  setDestinationForm({ name: "", slug: "", country: "", region: "", short_description: "", hero_image_url: "" });
+                  setDestinationForm({ name: "", slug: "", country: "", region: "", short_description: "", image_url: "", is_featured: false });
                   setEditDestination(null);
                   setCreateDestinationOpen(true);
                 }}
@@ -1208,10 +1212,19 @@ export default function AdminDashboard({
               <Label htmlFor="dest-image">URL de Imagen</Label>
               <Input
                 id="dest-image"
-                value={destinationForm.hero_image_url}
-                onChange={(e) => setDestinationForm({ ...destinationForm, hero_image_url: e.target.value })}
+                value={destinationForm.image_url}
+                onChange={(e) => setDestinationForm({ ...destinationForm, image_url: e.target.value })}
                 placeholder="https://..."
               />
+              {destinationForm.image_url && (
+                <div className="relative w-full h-32 rounded-lg overflow-hidden bg-slate-100 mt-2">
+                  <img 
+                    src={destinationForm.image_url}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="dest-desc">Descripción corta</Label>
@@ -1221,6 +1234,24 @@ export default function AdminDashboard({
                 onChange={(e) => setDestinationForm({ ...destinationForm, short_description: e.target.value })}
                 placeholder="Breve descripción del destino..."
                 rows={3}
+              />
+            </div>
+            <div className="flex items-center justify-between space-x-2 pt-2 pb-2 px-4 bg-purple-50 rounded-lg border border-purple-200">
+              <div className="flex-1">
+                <Label 
+                  htmlFor="dest-featured"
+                  className="text-sm font-medium leading-tight cursor-pointer"
+                >
+                  Destino destacado
+                </Label>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  Aparecerá en la página principal
+                </p>
+              </div>
+              <Switch
+                id="dest-featured"
+                checked={destinationForm.is_featured}
+                onCheckedChange={(checked) => setDestinationForm({ ...destinationForm, is_featured: checked })}
               />
             </div>
           </div>
