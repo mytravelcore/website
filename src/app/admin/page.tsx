@@ -1,5 +1,7 @@
 import { createClient } from "@/supabase/server";
 import AdminDashboard from "./components/admin-dashboard-new";
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 export const metadata = {
   title: 'Admin | TravelCore',
@@ -7,6 +9,14 @@ export const metadata = {
 };
 
 export default async function AdminPage() {
+  // Check authentication
+  const cookieStore = await cookies();
+  const adminSession = cookieStore.get('adminSession');
+
+  if (!adminSession) {
+    redirect('/admin/login');
+  }
+
   const supabase = await createClient();
   
   // Fetch all data for dashboard
