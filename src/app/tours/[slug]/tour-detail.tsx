@@ -219,7 +219,7 @@ export default function TourDetail({ tour, relatedTours, suggestedTours, package
   const startingPrice = useMemo(() => {
     if (tour.starting_price_from) return tour.starting_price_from;
     if (packages.length > 0) {
-      return Math.min(...packages.filter(p => p.is_active).map(p => p.price));
+      return Math.min(...packages.map(p => p.adultPrice));
     }
     return tour.price_usd;
   }, [tour.starting_price_from, tour.price_usd, packages]);

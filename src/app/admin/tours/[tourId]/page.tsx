@@ -152,24 +152,30 @@ const predefinedExcludes = [
 ];
 
 const defaultPackage = {
+  tour_id: '',
   name: '',
-  isDefault: false,
+  description: null,
+  is_default: false,
+  is_active: true,
+  sort_order: 0,
   // Adult pricing
-  adultSellingPrice: 0,
-  adultCrossedPrice: null,
-  adultMinPax: 1,
-  adultMaxPax: null,
+  adult_price: 0,
+  adult_crossed_price: null,
+  adult_min_pax: 1,
+  adult_max_pax: null,
   // Child pricing
-  childSellingPrice: 0,
-  childCrossedPrice: null,
-  childMinPax: 0,
-  childMaxPax: null,
-  childAgeMin: 3,
-  childAgeMax: 11,
+  child_price: 0,
+  child_crossed_price: null,
+  child_min_pax: 0,
+  child_max_pax: null,
+  child_age_min: 3,
+  child_age_max: 11,
   // Group discount
-  groupDiscountEnabled: false,
-  groupDiscountPercentage: null,
-  groupDiscountMinPax: null,
+  group_discount_enabled: false,
+  group_discount_percentage: null,
+  group_discount_min_pax: null,
+  created_at: '',
+  updated_at: '',
 };
 
 export default function UnifiedTourEditorPage() {
@@ -296,8 +302,8 @@ export default function UnifiedTourEditorPage() {
           ...defaultPackage,
           id: crypto.randomUUID(),
           name: 'Habitación Doble',
-          isDefault: true,
-          adultSellingPrice: tourData.price_usd || 0,
+          is_default: true,
+          adult_price: tourData.price_usd || 0,
         };
         setPackages([defaultPkg]);
         setExpandedPackages([defaultPkg.id]);
@@ -364,8 +370,8 @@ export default function UnifiedTourEditorPage() {
       const supabase = createClient();
 
       // Calculate main price from default package
-      const defaultPkg = packages.find(p => p.isDefault) || packages[0];
-      const mainPrice = defaultPkg?.adultSellingPrice || 0;
+      const defaultPkg = packages.find(p => p.is_default) || packages[0];
+      const mainPrice = defaultPkg?.adult_price || 0;
 
       // Update tour
       const { error: tourError } = await supabase
@@ -567,8 +573,8 @@ export default function UnifiedTourEditorPage() {
   const removePackage = (id: string) => {
     if (packages.length <= 1) return;
     const updatedPackages = packages.filter(p => p.id !== id);
-    if (packages.find(p => p.id === id)?.isDefault && updatedPackages.length > 0) {
-      updatedPackages[0].isDefault = true;
+    if (packages.find(p => p.id === id)?.is_default && updatedPackages.length > 0) {
+      updatedPackages[0].is_default = true;
     }
     setPackages(updatedPackages);
     setExpandedPackages(expandedPackages.filter(eid => eid !== id));
@@ -577,13 +583,13 @@ export default function UnifiedTourEditorPage() {
   const updatePackage = (id: string, field: keyof LocalPackage, value: any) => {
     setPackages(packages.map(pkg => {
       if (pkg.id === id) {
-        if (field === 'isDefault' && value === true) {
-          return { ...pkg, isDefault: true };
+        if (field === 'is_default' && value === true) {
+          return { ...pkg, is_default: true };
         }
         return { ...pkg, [field]: value };
       }
-      if (field === 'isDefault' && value === true) {
-        return { ...pkg, isDefault: false };
+      if (field === 'is_default' && value === true) {
+        return { ...pkg, is_default: false };
       }
       return pkg;
     }));
@@ -1310,7 +1316,7 @@ export default function UnifiedTourEditorPage() {
                         <span className="font-medium text-slate-800">
                           {pkg.name || 'Sin nombre'}
                         </span>
-                        {pkg.isDefault && (
+                        {pkg.is_default && (
                           <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full">
                             Default
                           </span>
@@ -1380,8 +1386,8 @@ export default function UnifiedTourEditorPage() {
                           <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
                             <Checkbox
                               id={`default-${pkg.id}`}
-                              checked={pkg.isDefault}
-                              onCheckedChange={(checked) => updatePackage(pkg.id, 'isDefault', checked)}
+                              checked={pkg.is_default}
+                              onCheckedChange={(checked) => updatePackage(pkg.id, 'is_default', checked)}
                             />
                             <label 
                               htmlFor={`default-${pkg.id}`}
@@ -1398,8 +1404,8 @@ export default function UnifiedTourEditorPage() {
                               <Label>Precio Adulto (USD)</Label>
                               <Input
                                 type="number"
-                                value={pkg.adultSellingPrice}
-                                onChange={(e) => updatePackage(pkg.id, 'adultSellingPrice', Number(e.target.value))}
+                                value={pkg.adult_price}
+                                onChange={(e) => updatePackage(pkg.id, 'adult_price', Number(e.target.value))}
                                 className="mt-1.5"
                                 placeholder="0"
                                 min="0"
@@ -1436,8 +1442,8 @@ export default function UnifiedTourEditorPage() {
                               <Label>Edad Mínima</Label>
                               <Input
                                 type="number"
-                                value={pkg.childAgeMin}
-                                onChange={(e) => updatePackage(pkg.id, 'childAgeMin', Number(e.target.value))}
+                                value={pkg.child_age_min ?? ''}
+                                onChange={(e) => updatePackage(pkg.id, 'child_age_min', Number(e.target.value))}
                                 className="mt-1.5"
                                 placeholder="3"
                                 min="0"
@@ -1447,8 +1453,8 @@ export default function UnifiedTourEditorPage() {
                               <Label>Edad Máxima</Label>
                               <Input
                                 type="number"
-                                value={pkg.childAgeMax}
-                                onChange={(e) => updatePackage(pkg.id, 'childAgeMax', Number(e.target.value))}
+                                value={pkg.child_age_max ?? ''}
+                                onChange={(e) => updatePackage(pkg.id, 'child_age_max', Number(e.target.value))}
                                 className="mt-1.5"
                                 placeholder="11"
                                 min="0"
@@ -1740,7 +1746,7 @@ export default function UnifiedTourEditorPage() {
                                               e.target.value ? Number(e.target.value) : null
                                             )}
                                             className="mt-1"
-                                            placeholder={`Predeterminado: $${pkg.adultSellingPrice}`}
+                                            placeholder={`Predeterminado: $${pkg.adult_price}`}
                                             min="0"
                                           />
                                         </div>

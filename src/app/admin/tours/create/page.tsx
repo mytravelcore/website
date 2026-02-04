@@ -311,10 +311,6 @@ export default function CreateTourPage() {
                     placeholder="https://images.unsplash.com/..."
                   />
 
-                    maxSize={10}
-                    label="Agregar imagen a la galería"
-                  />
-
                   {galleryImages.length > 0 && (
                     <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                       {galleryImages.map((url, index) => (

@@ -182,6 +182,7 @@ export interface Testimonial {
   image_url: string | null;
   tour_name: string | null;
   rating: number;
+  source?: string | null;
   created_at: string;
 }
 

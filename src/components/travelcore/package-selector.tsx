@@ -16,7 +16,8 @@ export default function PackageSelector({
   selectedPackageId, 
   onSelectPackage 
 }: PackageSelectorProps) {
-  const activePackages = packages.filter(p => p.is_active).sort((a, b) => a.sort_order - b.sort_order);
+  // PricingPackage doesn't have is_active/sort_order, use all packages
+  const activePackages = packages;
 
   // Auto-select if only one package
   useEffect(() => {
@@ -36,7 +37,7 @@ export default function PackageSelector({
       <div className="grid gap-2">
         {activePackages.map((pkg) => {
           const isSelected = selectedPackageId === pkg.id;
-          const Icon = pkg.package_type === 'single' ? User : Users;
+          const Icon = pkg.isDefault ? Users : User;
           
           return (
             <button
@@ -64,7 +65,7 @@ export default function PackageSelector({
                     {pkg.name}
                   </p>
                   <p className="text-xs text-tc-purple-deep/60">
-                    {pkg.primary_category === 'adult' ? 'Por adulto' : pkg.primary_category === 'child' ? 'Por niño' : 'Por persona'}
+                    Por adulto
                   </p>
                 </div>
               </div>
@@ -75,7 +76,7 @@ export default function PackageSelector({
                     "font-display text-base font-bold",
                     isSelected ? "text-tc-orange" : "text-tc-purple-deep"
                   )}>
-                    ${pkg.price.toLocaleString()} <span className="text-xs font-normal">{pkg.currency}</span>
+                    ${pkg.adultPrice.toLocaleString()} <span className="text-xs font-normal">USD</span>
                   </p>
                 </div>
                 {isSelected && (
