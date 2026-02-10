@@ -81,13 +81,12 @@ export default function CreateTourPage() {
             short_description: shortDescription || null,
             long_description: longDescription || null,
             hero_image_url: heroImageUrl || null,
-            gallery_image_urls: galleryImages.length > 0 ? galleryImages : null,
+            gallery_images: galleryImages.length > 0 ? galleryImages : null,
             duration_days: durationDays,
-            price_usd: priceUsd,
-            difficulty_level: difficultyLevel || null,
+            base_price_usd: priceUsd || null,
+            difficulty: difficultyLevel || null,
             status: 'draft',
             featured: false,
-            created_at: new Date().toISOString(),
           }
         ])
         .select()
