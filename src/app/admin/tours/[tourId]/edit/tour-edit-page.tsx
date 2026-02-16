@@ -933,12 +933,11 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
         <div className="max-w-3xl mx-auto p-6 space-y-12">
         {/* General Information */}
             <section id="general" className="scroll-mt-6">
-              <div className="flex items-center justify-between mb-6">
+              <div className="mb-6">
                 <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
                   <FileText className="w-5 h-5 text-[#3546A6]" />
                   Información General
                 </h2>
-                <SaveButton onClick={handleSaveGeneral} isSaving={isSavingGeneral} sectionKey="general" />
               </div>
               <div className="bg-white rounded-lg border border-slate-200 p-6 space-y-6">
                 <div className="flex items-center justify-between">
@@ -1031,17 +1030,21 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                     </select>
                   </div>
                 </div>
+                
+                {/* Save Button at bottom */}
+                <div className="flex justify-end pt-6 mt-6 border-t">
+                  <SaveButton onClick={handleSaveGeneral} isSaving={isSavingGeneral} sectionKey="general" />
+                </div>
               </div>
             </section>
 
             {/* Images */}
             <section id="images" className="scroll-mt-6">
-              <div className="flex items-center justify-between mb-6">
+              <div className="mb-6">
                 <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
                   <ImageIcon className="w-5 h-5 text-[#3546A6]" />
                   Imágenes
                 </h2>
-                <SaveButton onClick={handleSaveImages} isSaving={isSavingImages} sectionKey="images" />
               </div>
               <div className="bg-white rounded-lg border border-slate-200 p-6 space-y-6">
                 {/* Hero Image */}
@@ -1112,17 +1115,21 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                     </div>
                   )}
                 </div>
+                
+                {/* Save Button at bottom */}
+                <div className="flex justify-end pt-6 mt-6 border-t">
+                  <SaveButton onClick={handleSaveImages} isSaving={isSavingImages} sectionKey="images" />
+                </div>
               </div>
             </section>
 
             {/* Pricing */}
             <section id="pricing" className="scroll-mt-6">
-              <div className="flex items-center justify-between mb-6">
+              <div className="mb-6">
                 <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
                   <DollarSign className="w-5 h-5 text-[#3546A6]" />
                   Precios
                 </h2>
-                <SaveButton onClick={handleSavePricing} isSaving={isSavingPricing} sectionKey="pricing" />
               </div>
               
               <TooltipProvider>
@@ -1817,17 +1824,21 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                     </p>
                   </div>
                 </div>
+                
+                {/* Save Button at bottom */}
+                <div className="flex justify-end pt-6 mt-6 border-t">
+                  <SaveButton onClick={handleSavePricing} isSaving={isSavingPricing} sectionKey="pricing" />
+                </div>
               </TooltipProvider>
             </section>
 
             {/* Dates */}
             <section id="dates" className="scroll-mt-6">
-              <div className="flex items-center justify-between mb-6">
+              <div className="mb-6">
                 <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-[#3546A6]" />
                   Fechas
                 </h2>
-                <SaveButton onClick={handleSaveDates} isSaving={isSavingDates} sectionKey="dates" />
               </div>
               
               <div className="space-y-4">
@@ -2013,16 +2024,24 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                     </Collapsible>
                   ))
                 )}
+                
+                {/* Save Button at bottom */}
+                <div className="flex justify-end pt-6 mt-6 border-t bg-white rounded-lg p-4">
+                  <SaveButton onClick={handleSaveDates} isSaving={isSavingDates} sectionKey="dates" />
+                </div>
               </div>
             </section>
 
             {/* Itinerary */}
             <section id="itinerary" className="scroll-mt-6">
-              <div className="flex items-center justify-between mb-6">
+              <div className="mb-6">
                 <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
                   <Map className="w-5 h-5 text-[#3546A6]" />
                   Itinerario
                 </h2>
+              </div>
+              
+              <div className="space-y-4">
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
@@ -2032,7 +2051,6 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                     <FileText className="w-4 h-4 mr-2" />
                     {showBulkItinerary ? 'Cancelar' : 'Pegar itinerario completo'}
                   </Button>
-                  <SaveButton onClick={handleSaveItinerary} isSaving={isSavingItinerary} sectionKey="itinerary" />
                 </div>
               </div>
               
@@ -2097,17 +2115,21 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                   <Plus className="w-4 h-4 mr-2" />
                   Agregar día
                 </Button>
+                
+                {/* Save Button at bottom */}
+                <div className="flex justify-end pt-6 mt-6 border-t bg-white rounded-lg p-4">
+                  <SaveButton onClick={handleSaveItinerary} isSaving={isSavingItinerary} sectionKey="itinerary" />
+                </div>
               </div>
             </section>
 
             {/* Includes/Excludes */}
             <section id="includes" className="scroll-mt-6">
-              <div className="flex items-center justify-between mb-6">
+              <div className="mb-6">
                 <h2 className="text-lg font-semibold text-slate-900 flex items-center gap-2">
                   <List className="w-5 h-5 text-[#3546A6]" />
                   Incluye / No Incluye
                 </h2>
-                <SaveButton onClick={handleSaveIncludes} isSaving={isSavingIncludes} sectionKey="includes" />
               </div>
               <div className="bg-white rounded-lg border border-slate-200 p-6">
                 <div className="grid md:grid-cols-2 gap-6">
@@ -2202,6 +2224,11 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                       ))}
                     </div>
                   </div>
+                </div>
+                
+                {/* Save Button at bottom */}
+                <div className="flex justify-end pt-6 mt-6 border-t">
+                  <SaveButton onClick={handleSaveIncludes} isSaving={isSavingIncludes} sectionKey="includes" />
                 </div>
               </div>
             </section>

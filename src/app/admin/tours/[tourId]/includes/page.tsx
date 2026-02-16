@@ -147,24 +147,10 @@ export default function IncludesPage() {
 
   return (
     <div className="max-w-4xl">
-      {/* Header with Save Button */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-semibold text-[#3546A6]">Incluye / No incluye</h2>
-          <p className="text-slate-500">Define qué está incluido y qué no en el tour</p>
-        </div>
-        <Button 
-          onClick={handleSave}
-          disabled={isSaving}
-          className="bg-gradient-to-r from-[#3546A6] to-[#9996DB] hover:opacity-90 text-white"
-        >
-          {isSaving ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <Save className="w-4 h-4 mr-2" />
-          )}
-          Guardar
-        </Button>
+      {/* Header */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-semibold text-[#3546A6]">Incluye / No incluye</h2>
+        <p className="text-slate-500">Define qué está incluido y qué no en el tour</p>
       </div>
 
       <div className="grid md:grid-cols-2 gap-6">
@@ -331,21 +317,25 @@ export default function IncludesPage() {
         </Card>
       </div>
 
-      {/* Bottom Save Button */}
-      <div className="flex justify-end pt-6">
-        <Button 
-          onClick={handleSave}
-          disabled={isSaving}
-          className="bg-gradient-to-r from-[#3546A6] to-[#9996DB] hover:opacity-90 text-white"
-        >
-          {isSaving ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <Save className="w-4 h-4 mr-2" />
-          )}
-          Guardar
-        </Button>
-      </div>
+      {/* Save Button below grid */}
+      <Card className="mt-6">
+        <CardContent className="pt-6">
+          <div className="flex justify-end">
+            <Button 
+              onClick={handleSave}
+              disabled={isSaving}
+              className="bg-gradient-to-r from-[#3546A6] to-[#9996DB] hover:opacity-90 text-white"
+            >
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Guardar
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

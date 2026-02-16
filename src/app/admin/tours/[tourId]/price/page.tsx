@@ -328,24 +328,10 @@ export default function PricePage() {
   return (
     <TooltipProvider>
       <div className="max-w-4xl">
-        {/* Header with Save Button */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-2xl font-semibold text-[#3546A6]">Precio</h2>
-            <p className="text-slate-500">Configura los precios y paquetes del tour</p>
-          </div>
-          <Button 
-            onClick={handleSave}
-            disabled={isSaving}
-            className="bg-gradient-to-r from-[#3546A6] to-[#9996DB] hover:opacity-90 text-white"
-          >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4 mr-2" />
-            )}
-            Guardar precio
-          </Button>
+        {/* Header */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-semibold text-[#3546A6]">Precio</h2>
+          <p className="text-slate-500">Configura los precios y paquetes del tour</p>
         </div>
 
         {/* Package Type Selection */}
@@ -934,24 +920,24 @@ export default function PricePage() {
                 {startingPriceFrom ? `Se mostrará como "Desde $${startingPriceFrom.toLocaleString()} USD"` : 'Se usará el precio del paquete por defecto'}
               </p>
             </div>
+
+            {/* Save Button inside card */}
+            <div className="flex justify-end pt-6 mt-6 border-t">
+              <Button 
+                onClick={handleSave}
+                disabled={isSaving}
+                className="bg-gradient-to-r from-[#3546A6] to-[#9996DB] hover:opacity-90 text-white"
+              >
+                {isSaving ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                Guardar precio
+              </Button>
+            </div>
           </CardContent>
         </Card>
-
-        {/* Bottom Save Button */}
-        <div className="flex justify-end pt-6">
-          <Button 
-            onClick={handleSave}
-            disabled={isSaving}
-            className="bg-gradient-to-r from-[#3546A6] to-[#9996DB] hover:opacity-90 text-white"
-          >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : (
-              <Save className="w-4 h-4 mr-2" />
-            )}
-            Guardar precio
-          </Button>
-        </div>
       </div>
     </TooltipProvider>
   );

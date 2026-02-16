@@ -210,24 +210,10 @@ export default function ItineraryPage() {
 
   return (
     <div className="max-w-4xl">
-      {/* Header with Save Button */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-semibold text-[#3546A6]">Itinerario</h2>
-          <p className="text-slate-500">Define el itinerario día a día del tour</p>
-        </div>
-        <Button 
-          onClick={handleSave}
-          disabled={isSaving}
-          className="bg-gradient-to-r from-[#3546A6] to-[#9996DB] hover:opacity-90 text-white"
-        >
-          {isSaving ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <Save className="w-4 h-4 mr-2" />
-          )}
-          Guardar itinerario
-        </Button>
+      {/* Header */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-semibold text-[#3546A6]">Itinerario</h2>
+        <p className="text-slate-500">Define el itinerario día a día del tour</p>
       </div>
 
       {/* Itinerary Days */}
@@ -407,24 +393,24 @@ export default function ItineraryPage() {
             <Plus className="w-4 h-4 mr-2" />
             Agregar día
           </Button>
+
+          {/* Save Button inside card with border */}
+          <div className="flex justify-end pt-6 mt-6 border-t">
+            <Button 
+              onClick={handleSave}
+              disabled={isSaving}
+              className="bg-gradient-to-r from-[#3546A6] to-[#9996DB] hover:opacity-90 text-white"
+            >
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Guardar itinerario
+            </Button>
+          </div>
         </CardContent>
       </Card>
-
-      {/* Bottom Save Button */}
-      <div className="flex justify-end pt-6">
-        <Button 
-          onClick={handleSave}
-          disabled={isSaving}
-          className="bg-gradient-to-r from-[#3546A6] to-[#9996DB] hover:opacity-90 text-white"
-        >
-          {isSaving ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <Save className="w-4 h-4 mr-2" />
-          )}
-          Guardar itinerario
-        </Button>
-      </div>
     </div>
   );
 }

@@ -427,23 +427,9 @@ export default function DatesPage() {
   return (
     <div className="max-w-4xl">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-2xl font-semibold text-[#3546A6]">Fechas</h2>
-          <p className="text-slate-500">Configura disponibilidad y reglas de salida del tour</p>
-        </div>
-        <Button 
-          onClick={handleSave}
-          disabled={isSaving}
-          className="bg-gradient-to-r from-[#3546A6] to-[#9996DB] hover:opacity-90 text-white"
-        >
-          {isSaving ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <Save className="w-4 h-4 mr-2" />
-          )}
-          Guardar Fechas
-        </Button>
+      <div className="mb-6">
+        <h2 className="text-2xl font-semibold text-[#3546A6]">Fechas</h2>
+        <p className="text-slate-500">Configura disponibilidad y reglas de salida del tour</p>
       </div>
 
       {/* No packages warning */}
@@ -802,21 +788,25 @@ export default function DatesPage() {
         )}
       </div>
 
-      {/* Bottom Save Button */}
-      <div className="flex justify-end pt-6">
-        <Button 
-          onClick={handleSave}
-          disabled={isSaving}
-          className="bg-gradient-to-r from-[#3546A6] to-[#9996DB] hover:opacity-90 text-white"
-        >
-          {isSaving ? (
-            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-          ) : (
-            <Save className="w-4 h-4 mr-2" />
-          )}
-          Guardar Fechas
-        </Button>
-      </div>
+      {/* Save Button in separate card */}
+      <Card className="mt-6">
+        <CardContent className="pt-6">
+          <div className="flex justify-end">
+            <Button 
+              onClick={handleSave}
+              disabled={isSaving}
+              className="bg-gradient-to-r from-[#3546A6] to-[#9996DB] hover:opacity-90 text-white"
+            >
+              {isSaving ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4 mr-2" />
+              )}
+              Guardar Fechas
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!deletingDate} onOpenChange={() => setDeletingDate(null)}>

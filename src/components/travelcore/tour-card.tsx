@@ -20,10 +20,10 @@ const difficultyColors = {
 
 export default function TourCard({ tour }: TourCardProps) {
   return (
-    <Link href={`/tours/${tour.slug}`} className="group block">
-      <div className="bg-white rounded-2xl overflow-hidden border border-tc-purple-light/20 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2">
+    <Link href={`/tours/${tour.slug}`} className="group block h-full">
+      <div className="bg-white rounded-2xl overflow-hidden border border-tc-purple-light/20 shadow-sm hover:shadow-xl transition-all duration-300 hover:-translate-y-2 h-full flex flex-col">
         {/* Image Container */}
-        <div className="relative aspect-[16/10] overflow-hidden">
+        <div className="relative aspect-[16/10] overflow-hidden flex-shrink-0">
           <Image
             src={
               tour.hero_image_url ||
@@ -53,29 +53,24 @@ export default function TourCard({ tour }: TourCardProps) {
             )}
           </div>
 
-          {/* Price Tag */}
-          <div className="absolute bottom-4 right-4">
-            <div className="bg-white rounded-lg px-3 py-1.5 shadow-lg">
-              <span className="text-xs text-tc-purple-deep/60">Desde</span>
-              <p className="text-xl font-bold text-tc-purple-deep">
-                ${tour.price_usd?.toLocaleString()}
-              </p>
-            </div>
-          </div>
+
         </div>
 
         {/* Content */}
-        <div className="p-6">
-          <h3 className="font-display text-xl font-bold text-tc-purple-deep mb-2 group-hover:text-tc-orange transition-colors line-clamp-2">
-            {tour.title}
-          </h3>
+        <div className="p-6 flex flex-col flex-grow">
+          {/* Fixed height title and description area */}
+          <div className="flex-grow">
+            <h3 className="font-display text-xl font-bold text-tc-purple-deep mb-2 group-hover:text-tc-orange transition-colors line-clamp-2">
+              {tour.title}
+            </h3>
 
-          <p className="text-tc-purple-deep/60 text-sm mb-4 line-clamp-2">
-            {tour.short_description}
-          </p>
+            <p className="text-tc-purple-deep/60 text-sm mb-4 line-clamp-2">
+              {tour.short_description}
+            </p>
+          </div>
 
-          {/* Meta Info */}
-          <div className="flex flex-wrap gap-4 mb-4">
+          {/* Meta Info - Fixed at bottom */}
+          <div className="flex flex-wrap items-center gap-4 mb-4">
             {tour.destination && (
               <div className="flex items-center gap-1.5 text-sm text-tc-purple-deep/70">
                 <MapPin className="w-4 h-4 text-tc-orange" />
@@ -98,6 +93,15 @@ export default function TourCard({ tour }: TourCardProps) {
                 </span>
               </div>
             )}
+            {/* Price */}
+            </div>
+
+          {/* Price Section - Always in same position */}
+          <div className="flex items-center gap-1 text-sm mb-4">
+            <span className="text-xs text-tc-purple-deep/60">Desde</span>
+            <span className="text-lg font-bold text-tc-purple-deep">
+              ${(tour.starting_price_from || tour.price_usd)?.toLocaleString()}
+            </span>
           </div>
 
           {/* CTA */}

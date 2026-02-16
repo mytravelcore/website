@@ -24,6 +24,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Slider } from '@/components/ui/slider';
 import { cn } from '@/lib/utils';
 import { createClient } from '@/supabase/client';
@@ -279,8 +280,9 @@ export default function GeneralPage() {
       <div className="flex gap-8">
         {/* Main Form - Left Side */}
         <div className="flex-1 max-w-2xl">
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
-            {/* Tour Name */}
+          <Card>
+            <CardContent className="pt-6">
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">{/* Tour Name */}
             <div>
               <Label className="text-slate-600 font-medium">Nombre del tour</Label>
               <Input
@@ -606,8 +608,8 @@ export default function GeneralPage() {
               </div>
             </div>
 
-            {/* Save Button */}
-            <div className="flex items-center justify-end gap-4 pt-4">
+            {/* Save Button inside card with border */}
+            <div className="flex items-center justify-end gap-4 pt-6 mt-8 border-t">
               {saveSuccess && (
                 <span className="text-sm text-green-600 font-medium animate-in fade-in">
                   ✓ Cambios guardados exitosamente
@@ -627,6 +629,8 @@ export default function GeneralPage() {
               </Button>
             </div>
           </form>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Gallery - Right Side */}
