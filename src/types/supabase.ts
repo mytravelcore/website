@@ -348,10 +348,12 @@ export type Database = {
         Row: {
           created_at: string | null
           end_date: string | null
+          has_price_override: boolean | null
           id: string
           is_available: boolean | null
           max_participants: number | null
           notes: string | null
+          price_override_config: Json | null
           repeat_enabled: boolean | null
           repeat_pattern: string | null
           repeat_until: string | null
@@ -362,10 +364,12 @@ export type Database = {
         Insert: {
           created_at?: string | null
           end_date?: string | null
+          has_price_override?: boolean | null
           id?: string
           is_available?: boolean | null
           max_participants?: number | null
           notes?: string | null
+          price_override_config?: Json | null
           repeat_enabled?: boolean | null
           repeat_pattern?: string | null
           repeat_until?: string | null
@@ -376,10 +380,12 @@ export type Database = {
         Update: {
           created_at?: string | null
           end_date?: string | null
+          has_price_override?: boolean | null
           id?: string
           is_available?: boolean | null
           max_participants?: number | null
           notes?: string | null
+          price_override_config?: Json | null
           repeat_enabled?: boolean | null
           repeat_pattern?: string | null
           repeat_until?: string | null
@@ -443,6 +449,7 @@ export type Database = {
           title: string
           tour_label: string | null
           updated_at: string | null
+          use_general_pricing: boolean | null
         }
         Insert: {
           accommodation?: Json | null
@@ -489,6 +496,7 @@ export type Database = {
           title: string
           tour_label?: string | null
           updated_at?: string | null
+          use_general_pricing?: boolean | null
         }
         Update: {
           accommodation?: Json | null
@@ -535,6 +543,7 @@ export type Database = {
           title?: string
           tour_label?: string | null
           updated_at?: string | null
+          use_general_pricing?: boolean | null
         }
         Relationships: [
           {

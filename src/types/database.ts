@@ -88,6 +88,7 @@ export interface Tour {
   primary_price_category?: string;
   price_packages?: PricePackage[];
   starting_price_from?: number | null;
+  use_general_pricing?: boolean;
   // Timestamps
   created_at: string;
   updated_at: string;
@@ -143,10 +144,43 @@ export interface TourDate {
   repeat_enabled: boolean;
   repeat_pattern: "daily" | "weekly" | "monthly" | null;
   repeat_until: string | null;
+  // Date-specific pricing
+  has_price_override: boolean;
+  price_override_config: DatePriceConfig | null;
   created_at: string;
   updated_at: string;
   // Relationships
   date_packages?: TourDatePackage[];
+}
+
+export interface DatePriceConfig {
+  package_type: "single" | "multiple";
+  primary_price_category: string;
+  packages: DatePricePackage[];
+  starting_price_from?: number | null;
+}
+
+export interface DatePricePackage {
+  id: string;
+  name: string;
+  label: string;
+  isDefault: boolean;
+  adultPrice: number;
+  adultCrossedPrice?: number;
+  adultSingleSupplement: number;
+  adultMinPax: number;
+  adultMaxPax: number | null;
+  adultGroupDiscount: boolean;
+  childPrice: number;
+  childCrossedPrice?: number;
+  childAgeMin: number;
+  childAgeMax: number;
+  childMinPax: number;
+  childMaxPax: number | null;
+  childGroupDiscount: boolean;
+  infantPrice: number;
+  infantAgeMax: number;
+  details: string;
 }
 
 export interface TourDatePackage {

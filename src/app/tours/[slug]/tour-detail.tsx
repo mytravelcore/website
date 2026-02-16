@@ -3,12 +3,13 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { 
   MapPin, Clock, TrendingUp, Calendar, Check, X, 
   ChevronDown, ChevronUp, MessageCircle, ArrowRight,
   Share2, Heart, CheckCircle, Zap, Shield, ChevronRight, PhoneCall,
-  ChevronLeft, Maximize2
+  ChevronLeft, Maximize2, Loader
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -21,11 +22,9 @@ import {
 } from '@/components/ui/dialog';
 import * as DialogPrimitive from "@radix-ui/react-dialog";
 import TourCard from '@/components/travelcore/tour-card';
-import PackageSelector from '@/components/travelcore/package-selector';
-import AvailabilityCalendar from '@/components/travelcore/availability-calendar';
+import AvailabilityCalendar, { resolvePricingForDate, type ResolvedPricing } from '@/components/travelcore/availability-calendar';
 import TourSummaryCard from '@/components/travelcore/tour-summary-card';
 import SupportWidget from '@/components/travelcore/support-widget';
-import BookingModal from '@/components/travelcore/booking-modal';
 import type { Tour, ItineraryDay, PricingPackage, TourDate } from '@/types/database';
 import { createClient } from '@/supabase/client';
 
@@ -113,6 +112,7 @@ function clearTourCache() {
 }
 
 export default function TourDetail({ tour: initialTour, relatedTours, suggestedTours, packages: initialPackages, tourDates: initialDates }: TourDetailProps) {
+  const router = useRouter();
   const [tour, setTour] = useState(initialTour);
   const [expandedDays, setExpandedDays] = useState<number[]>([0]);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -121,7 +121,6 @@ export default function TourDetail({ tour: initialTour, relatedTours, suggestedT
   const [packages, setPackages] = useState(initialPackages);
   const [tourDates, setTourDates] = useState(initialDates);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
-  const [showBookingModal, setShowBookingModal] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
 
@@ -295,34 +294,106 @@ export default function TourDetail({ tour: initialTour, relatedTours, suggestedT
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [lightboxOpen, nextImage, prevImage]);
 
+  // Pricing flags from tour record
+  const useGeneralPricing = (tour as any).use_general_pricing !== false; // default true
+  const generalPackageType: 'single' | 'multiple' = (tour as any).package_type || 'single';
+
+  // Resolve pricing for selected date
+  const resolvedPricing = useMemo<ResolvedPricing | null>(() => {
+    if (!selectedDateId) return null;
+    const selectedDate = tourDates.find(d => d.id === selectedDateId);
+    if (!selectedDate) return null;
+    return resolvePricingForDate(selectedDate, useGeneralPricing, generalPackageType, packages);
+  }, [selectedDateId, tourDates, useGeneralPricing, generalPackageType, packages]);
+
+  // Auto-select single package when resolved pricing is single mode
+  useEffect(() => {
+    if (resolvedPricing && resolvedPricing.source !== 'none') {
+      if (resolvedPricing.packageType === 'single' && resolvedPricing.packages.length === 1) {
+        setSelectedPackageId(resolvedPricing.packages[0].id);
+      } else if (resolvedPricing.packageType === 'multiple' && resolvedPricing.packages.length === 1) {
+        setSelectedPackageId(resolvedPricing.packages[0].id);
+      } else {
+        // Reset package selection when date changes for multiple packages
+        const defaultPkg = resolvedPricing.packages.find(p => p.isDefault);
+        setSelectedPackageId(defaultPkg?.id || null);
+      }
+    } else {
+      setSelectedPackageId(null);
+    }
+  }, [resolvedPricing]);
+
+  // Handle date selection - also clear package selection
+  const handleSelectDate = useCallback((dateId: string | null) => {
+    setSelectedDateId(dateId);
+    // Package will be auto-selected/reset by the effect above
+  }, []);
+
+  // BUGFIX: Validate selected date - clear if invalid or no pricing
+  useEffect(() => {
+    if (selectedDateId) {
+      const selectedDate = tourDates.find(d => d.id === selectedDateId);
+      if (!selectedDate || !selectedDate.is_available) {
+        // Date no longer exists or is unavailable - clear selection
+        setSelectedDateId(null);
+        setSelectedPackageId(null);
+        return;
+      }
+      
+      // Check if date has pricing
+      const pricing = resolvePricingForDate(selectedDate, useGeneralPricing, generalPackageType, packages);
+      if (pricing.source === 'none') {
+        // Date has no pricing - clear selection
+        setSelectedDateId(null);
+        setSelectedPackageId(null);
+      }
+    }
+  }, [selectedDateId, tourDates, useGeneralPricing, generalPackageType, packages]);
+
+  // Handle package selection from calendar
+  const handleSelectPackage = useCallback((packageId: string | null) => {
+    setSelectedPackageId(packageId);
+  }, []);
+
   // Calculate starting price - support both camelCase and snake_case formats
   const startingPrice = useMemo(() => {
     if (tour.starting_price_from) return tour.starting_price_from;
-    if (packages.length > 0) {
+    if (useGeneralPricing && packages.length > 0) {
       return Math.min(...packages.map(p => p.adultPrice ?? p.adult_price ?? 0));
     }
+    // If general pricing is off, try to get the cheapest from date overrides
+    if (!useGeneralPricing && tourDates.length > 0) {
+      const allPrices: number[] = [];
+      tourDates.forEach(d => {
+        if (d.has_price_override && d.price_override_config) {
+          const config = d.price_override_config as any;
+          (config.packages || []).forEach((pkg: any) => {
+            if (pkg.adultPrice && pkg.adultPrice > 0) allPrices.push(pkg.adultPrice);
+          });
+        }
+      });
+      if (allPrices.length > 0) return Math.min(...allPrices);
+    }
     return tour.price_usd;
-  }, [tour.starting_price_from, tour.price_usd, packages]);
+  }, [tour.starting_price_from, tour.price_usd, packages, useGeneralPricing, tourDates]);
 
-  // Handle booking
-  const handleBook = () => {
-    const selectedPackage = packages.find(p => p.id === selectedPackageId);
-    const selectedDate = tourDates.find(d => d.id === selectedDateId);
-    
-    if (!selectedPackage || !selectedDate) return;
-    
-    // Open booking modal instead of WhatsApp
-    setShowBookingModal(true);
+  // Get the resolved package name for booking
+  const getResolvedPackageName = () => {
+    if (!resolvedPricing || resolvedPricing.source === 'none') return '';
+    if (selectedPackageId) {
+      const pkg = resolvedPricing.packages.find(p => p.id === selectedPackageId);
+      return pkg?.name || '';
+    }
+    if (resolvedPricing.packages.length === 1) return resolvedPricing.packages[0].name;
+    return '';
   };
 
-  // Get formatted booking data for the modal
+  // Get formatted booking data for the booking page
   const getBookingData = () => {
-    const selectedPackage = packages.find(p => p.id === selectedPackageId);
     const selectedDate = tourDates.find(d => d.id === selectedDateId);
     
     const formatDateRange = () => {
       if (!selectedDate) return '';
-      // Parse date strings and add timezone offset to avoid off-by-one errors
       const parseDate = (dateStr: string) => {
         const [year, month, day] = dateStr.split('T')[0].split('-').map(Number);
         return new Date(year, month - 1, day);
@@ -350,9 +421,28 @@ export default function TourDetail({ tour: initialTour, relatedTours, suggestedT
 
     return {
       tourName: tour.title,
-      roomType: selectedPackage?.name || '',
+      roomType: getResolvedPackageName(),
       dateRange: formatDateRange()
     };
+  };
+
+  // Handle booking - navigate to booking page
+  const handleBook = () => {
+    const selectedDate = tourDates.find(d => d.id === selectedDateId);
+    if (!selectedDate || !resolvedPricing || resolvedPricing.source === 'none') return;
+    
+    // For multiple packages, ensure a package is selected
+    if (resolvedPricing.packageType === 'multiple' && resolvedPricing.packages.length > 1 && !selectedPackageId) return;
+    
+    // Navigate to the booking page with tour info as search params
+    const bookingData = getBookingData();
+    const params = new URLSearchParams({
+      tour: bookingData.tourName,
+      room: bookingData.roomType,
+      dates: bookingData.dateRange,
+      slug: tour.slug || '',
+    });
+    router.push(`/reservar?${params.toString()}`);
   };
 
   // Scroll to reserva section
@@ -710,8 +800,8 @@ export default function TourDetail({ tour: initialTour, relatedTours, suggestedT
                 )}
               </motion.div>
 
-              {/* Packages Selector */}
-              {packages.length > 0 && (
+              {/* Availability & Pricing - Date-First Flow */}
+              {tourDates.length > 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -722,41 +812,29 @@ export default function TourDetail({ tour: initialTour, relatedTours, suggestedT
                 >
                   <div className="mb-4">
                     <span className="inline-block text-xs font-bold tracking-widest text-tc-orange uppercase mb-2">
-                      Opciones de Viaje
+                      Reservar
                     </span>
                     <h2 className="font-display text-2xl md:text-3xl font-bold text-tc-purple-deep">
-                      Elige tu Paquete
+                      Fechas y Precios
                     </h2>
                   </div>
-                  <PackageSelector
-                    packages={packages}
-                    selectedPackageId={selectedPackageId}
-                    onSelectPackage={setSelectedPackageId}
-                  />
-                </motion.div>
-              )}
-
-              {/* Availability Calendar */}
-              {tourDates.length > 0 && (
-                <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: 0.5, duration: 0.6 }}
-                >
                   <AvailabilityCalendar
                     tourDates={tourDates}
                     packages={packages}
-                    selectedPackageId={selectedPackageId}
+                    useGeneralPricing={useGeneralPricing}
+                    generalPackageType={generalPackageType}
                     selectedDateId={selectedDateId}
-                    onSelectDate={setSelectedDateId}
+                    selectedPackageId={selectedPackageId}
+                    onSelectDate={handleSelectDate}
+                    onSelectPackage={handleSelectPackage}
                     onBook={handleBook}
+                    resolvedPricing={resolvedPricing}
                   />
                 </motion.div>
               )}
 
               {/* No dates available message */}
-              {tourDates.length === 0 && packages.length === 0 && (
+              {tourDates.length === 0 && (
                 <motion.div
                   initial={{ opacity: 0, y: 20 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -802,14 +880,45 @@ export default function TourDetail({ tour: initialTour, relatedTours, suggestedT
                     <div className="p-5">
                       {/* Price Section */}
                       <div className="mb-5">
-                        <span className="text-xs font-semibold text-tc-purple-deep/60 tracking-wider uppercase">Precio desde</span>
-                        <div className="flex items-baseline gap-1.5 mt-0.5">
-                          <span className="font-display text-3xl font-black bg-gradient-to-r from-tc-purple-deep to-tc-orange bg-clip-text text-transparent">
-                            ${startingPrice?.toLocaleString()}
-                          </span>
-                          <span className="text-sm text-tc-purple-deep/60">USD</span>
-                        </div>
-                        <p className="text-xs text-tc-purple-deep/50 mt-0.5">por persona</p>
+                        {resolvedPricing && resolvedPricing.source !== 'none' && selectedDateId ? (
+                          <>
+                            <span className="text-xs font-semibold text-tc-purple-deep/60 tracking-wider uppercase">
+                              {resolvedPricing.source === 'date_override' ? 'Precio especial' : 'Precio'}
+                            </span>
+                            <div className="flex items-baseline gap-1.5 mt-0.5">
+                              {(() => {
+                                const activePkg = selectedPackageId 
+                                  ? resolvedPricing.packages.find(p => p.id === selectedPackageId) 
+                                  : resolvedPricing.packages[0];
+                                const price = activePkg?.adultPrice ?? 0;
+                                const crossed = activePkg?.adultCrossedPrice;
+                                return (
+                                  <>
+                                    {crossed && crossed > 0 && (
+                                      <span className="text-lg text-slate-400 line-through">${crossed.toLocaleString()}</span>
+                                    )}
+                                    <span className="font-display text-3xl font-black bg-gradient-to-r from-tc-purple-deep to-tc-orange bg-clip-text text-transparent">
+                                      ${price.toLocaleString()}
+                                    </span>
+                                  </>
+                                );
+                              })()}
+                              <span className="text-sm text-tc-purple-deep/60">USD</span>
+                            </div>
+                            <p className="text-xs text-tc-purple-deep/50 mt-0.5">por persona</p>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-xs font-semibold text-tc-purple-deep/60 tracking-wider uppercase">Precio desde</span>
+                            <div className="flex items-baseline gap-1.5 mt-0.5">
+                              <span className="font-display text-3xl font-black bg-gradient-to-r from-tc-purple-deep to-tc-orange bg-clip-text text-transparent">
+                                ${startingPrice?.toLocaleString()}
+                              </span>
+                              <span className="text-sm text-tc-purple-deep/60">USD</span>
+                            </div>
+                            <p className="text-xs text-tc-purple-deep/50 mt-0.5">por persona</p>
+                          </>
+                        )}
                       </div>
 
                       {/* Benefits - Compact */}
@@ -1132,15 +1241,6 @@ export default function TourDetail({ tour: initialTour, relatedTours, suggestedT
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Booking Modal with Summary */}
-      <BookingModal
-        isOpen={showBookingModal}
-        onClose={() => setShowBookingModal(false)}
-        tourName={getBookingData().tourName}
-        roomType={getBookingData().roomType}
-        dateRange={getBookingData().dateRange}
-      />
 
       {/* Lightbox Modal */}
       <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>

@@ -94,6 +94,7 @@ export default function PricePage() {
   const [tour, setTour] = useState<Tour | null>(null);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isSavingReferencePrice, setIsSavingReferencePrice] = useState(false);
   
   // Price configuration
   const [packageType, setPackageType] = useState<'single' | 'multiple'>('single');
@@ -260,6 +261,30 @@ export default function PricePage() {
     }
   };
 
+  const handleSaveReferencePrice = async () => {
+    setIsSavingReferencePrice(true);
+    try {
+      const supabase = createClient();
+      
+      // Only update the starting_price_from field
+      const { error } = await supabase
+        .from('tours')
+        .update({ 
+          starting_price_from: startingPriceFrom,
+        })
+        .eq('id', tourId);
+
+      if (error) throw error;
+
+      alert('Precio de referencia guardado exitosamente');
+    } catch (error) {
+      console.error('Error saving reference price:', error);
+      alert('Error al guardar el precio de referencia');
+    } finally {
+      setIsSavingReferencePrice(false);
+    }
+  };
+
   const addPackage = () => {
     const newPkg = createEmptyPackage(`Package ${packages.length + 1}`);
     setPackages([...packages, newPkg]);
@@ -333,6 +358,46 @@ export default function PricePage() {
           <h2 className="text-2xl font-semibold text-[#3546A6]">Precio</h2>
           <p className="text-slate-500">Configura los precios y paquetes del tour</p>
         </div>
+
+        {/* Starting Price - Always Visible with Independent Save */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Precio de Referencia</CardTitle>
+            <CardDescription>Se mostrará en las tarjetas del tour (independiente de la configuración de precios)</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div>
+              <Label>Precio "Desde"</Label>
+              <Input
+                type="number"
+                value={startingPriceFrom ?? ''}
+                onChange={(e) => setStartingPriceFrom(e.target.value ? Number(e.target.value) : null)}
+                className="mt-1.5"
+                placeholder="Para mostrar 'Desde $XXX USD'"
+                min="0"
+              />
+              <p className="text-sm text-slate-500 mt-1">
+                {startingPriceFrom ? `Se mostrará como "Desde $${startingPriceFrom.toLocaleString()} USD"` : 'Se usará el precio del paquete por defecto'}
+              </p>
+            </div>
+
+            {/* Independent Save Button */}
+            <div className="flex justify-end pt-6 mt-6 border-t">
+              <Button 
+                onClick={handleSaveReferencePrice}
+                disabled={isSavingReferencePrice}
+                className="bg-gradient-to-r from-[#FFA03B] to-[#FFD491] hover:opacity-90 text-white"
+              >
+                {isSavingReferencePrice ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                Guardar Precio de Referencia
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Package Type Selection */}
         <Card className="mb-6">
@@ -899,45 +964,22 @@ export default function PricePage() {
           </Button>
         </div>
 
-        {/* Starting Price - Optional */}
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle>Precio de Referencia</CardTitle>
-            <CardDescription>Se mostrará en las tarjetas del tour</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div>
-              <Label>Precio "Desde" (opcional)</Label>
-              <Input
-                type="number"
-                value={startingPriceFrom ?? ''}
-                onChange={(e) => setStartingPriceFrom(e.target.value ? Number(e.target.value) : null)}
-                className="mt-1.5"
-                placeholder="Para mostrar 'Desde $XXX USD'"
-                min="0"
-              />
-              <p className="text-sm text-slate-500 mt-1">
-                {startingPriceFrom ? `Se mostrará como "Desde $${startingPriceFrom.toLocaleString()} USD"` : 'Se usará el precio del paquete por defecto'}
-              </p>
-            </div>
-
-            {/* Save Button inside card */}
-            <div className="flex justify-end pt-6 mt-6 border-t">
-              <Button 
-                onClick={handleSave}
-                disabled={isSaving}
-                className="bg-gradient-to-r from-[#3546A6] to-[#9996DB] hover:opacity-90 text-white"
-              >
-                {isSaving ? (
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : (
-                  <Save className="w-4 h-4 mr-2" />
-                )}
-                Guardar precio
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        {/* Main Save Button for Pricing Configuration */}
+        <div className="flex justify-end mt-8 pt-6 border-t">
+          <Button 
+            onClick={handleSave}
+            disabled={isSaving}
+            size="lg"
+            className="bg-gradient-to-r from-[#3546A6] to-[#9996DB] hover:opacity-90 text-white"
+          >
+            {isSaving ? (
+              <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+            ) : (
+              <Save className="w-5 h-5 mr-2" />
+            )}
+            Guardar Configuración de Precios
+          </Button>
+        </div>
       </div>
     </TooltipProvider>
   );

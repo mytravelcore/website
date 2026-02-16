@@ -82,7 +82,16 @@ interface LocalTourDate {
   repeat_pattern: 'daily' | 'weekly' | 'monthly' | 'yearly' | null;
   repeat_until: string | null;
   package_overrides: LocalPackageOverride[];
+  has_price_override: boolean;
+  price_override_config: LocalDatePriceConfig | null;
   isNew?: boolean;
+}
+
+interface LocalDatePriceConfig {
+  package_type: 'single' | 'multiple';
+  primary_price_category: string;
+  packages: LocalPricePackage[];
+  starting_price_from?: number | null;
 }
 
 interface LocalPackageOverride {
@@ -145,12 +154,348 @@ interface TourEditPageProps {
   destinations: Destination[];
 }
 
+// ============================
+// DatePricingEditor Sub-Component
+// ============================
+interface DatePricingEditorProps {
+  config: LocalDatePriceConfig;
+  onChange: (config: LocalDatePriceConfig) => void;
+}
+
+function DatePricingEditor({ config, onChange }: DatePricingEditorProps) {
+  const [expandedPkgs, setExpandedPkgs] = useState<string[]>(() => 
+    config.packages.length > 0 ? [config.packages[0].id] : []
+  );
+  const [activeTabs, setActiveTabs] = useState<Record<string, string>>({});
+
+  const updateConfig = (partial: Partial<LocalDatePriceConfig>) => {
+    onChange({ ...config, ...partial });
+  };
+
+  const updatePkg = (pkgId: string, field: keyof LocalPricePackage, value: any) => {
+    const updatedPkgs = config.packages.map(pkg => {
+      if (pkg.id === pkgId) {
+        if (field === 'isDefault' && value === true) {
+          return { ...pkg, isDefault: true };
+        }
+        return { ...pkg, [field]: value };
+      }
+      if (field === 'isDefault' && value === true) {
+        return { ...pkg, isDefault: false };
+      }
+      return pkg;
+    });
+    updateConfig({ packages: updatedPkgs });
+  };
+
+  const addPkg = () => {
+    const newPkg = createEmptyPackage(`Paquete ${config.packages.length + 1}`);
+    const newPkgs = [...config.packages, newPkg];
+    updateConfig({ packages: newPkgs });
+    setExpandedPkgs([...expandedPkgs, newPkg.id]);
+  };
+
+  const removePkg = (id: string) => {
+    if (config.packages.length <= 1) return;
+    const updated = config.packages.filter(p => p.id !== id);
+    if (config.packages.find(p => p.id === id)?.isDefault && updated.length > 0) {
+      updated[0].isDefault = true;
+    }
+    updateConfig({ packages: updated });
+    setExpandedPkgs(expandedPkgs.filter(eid => eid !== id));
+  };
+
+  const togglePkgExpand = (id: string) => {
+    setExpandedPkgs(prev => 
+      prev.includes(id) ? prev.filter(eid => eid !== id) : [...prev, id]
+    );
+    if (!activeTabs[id]) {
+      setActiveTabs({ ...activeTabs, [id]: 'general' });
+    }
+  };
+
+  return (
+    <TooltipProvider>
+      <div className="space-y-4 mt-2 pt-4 border-t border-slate-100">
+        {/* Package Type Toggle */}
+        <div className="space-y-2">
+          <Label className="text-sm">Tipo de Paquete (para esta fecha)</Label>
+          <div className="flex rounded-lg border border-slate-200 overflow-hidden w-fit">
+            <button
+              type="button"
+              className={cn(
+                "px-8 py-2 text-xs font-medium transition-all",
+                config.package_type === 'single' 
+                  ? "bg-slate-100 text-[#3546A6] border-b-2 border-[#3546A6]" 
+                  : "bg-white text-slate-600 hover:bg-slate-50"
+              )}
+              onClick={() => updateConfig({ package_type: 'single' })}
+            >
+              Single
+            </button>
+            <button
+              type="button"
+              className={cn(
+                "px-8 py-2 text-xs font-medium transition-all",
+                config.package_type === 'multiple' 
+                  ? "bg-slate-100 text-[#3546A6] border-b-2 border-[#3546A6]" 
+                  : "bg-white text-slate-600 hover:bg-slate-50"
+              )}
+              onClick={() => updateConfig({ package_type: 'multiple' })}
+            >
+              Multiple
+            </button>
+          </div>
+        </div>
+
+        {/* Single Package Mode */}
+        {config.package_type === 'single' && config.packages[0] && (
+          <div className="bg-slate-50 rounded-lg border border-slate-200">
+            <Tabs defaultValue="adult" className="p-3">
+              <TabsList className="bg-white border border-slate-200 p-0.5 h-auto">
+                <TabsTrigger value="adult" className="data-[state=active]:bg-[#3546A6] data-[state=active]:text-white text-xs py-1.5">
+                  Adultos
+                </TabsTrigger>
+                <TabsTrigger value="child" className="data-[state=active]:bg-[#3546A6] data-[state=active]:text-white text-xs py-1.5">
+                  Niños
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="adult" className="mt-3 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">Precio de Venta (USD)</Label>
+                    <Input
+                      type="number"
+                      value={config.packages[0].adultPrice || 0}
+                      onChange={(e) => updatePkg(config.packages[0].id, 'adultPrice', Number(e.target.value))}
+                      className="mt-1 h-9 text-sm"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Precio Tachado (USD)</Label>
+                    <Input
+                      type="number"
+                      value={config.packages[0].adultCrossedPrice || ''}
+                      onChange={(e) => updatePkg(config.packages[0].id, 'adultCrossedPrice', e.target.value ? Number(e.target.value) : 0)}
+                      className="mt-1 h-9 text-sm"
+                      min="0"
+                    />
+                  </div>
+                </div>
+                <div className="p-2 bg-blue-50 rounded text-xs text-blue-700">
+                  <strong>Vista previa:</strong>{' '}
+                  {config.packages[0].adultCrossedPrice && config.packages[0].adultCrossedPrice > 0 && (
+                    <span className="line-through text-slate-500 ml-1">${config.packages[0].adultCrossedPrice.toLocaleString()}</span>
+                  )}
+                  <span className="font-semibold ml-1">${config.packages[0].adultPrice?.toLocaleString() || 0} USD</span>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="child" className="mt-3 space-y-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">Precio Niño (USD)</Label>
+                    <Input
+                      type="number"
+                      value={config.packages[0].childPrice || 0}
+                      onChange={(e) => updatePkg(config.packages[0].id, 'childPrice', Number(e.target.value))}
+                      className="mt-1 h-9 text-sm"
+                      min="0"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Precio Tachado (USD)</Label>
+                    <Input
+                      type="number"
+                      value={config.packages[0].childCrossedPrice || ''}
+                      onChange={(e) => updatePkg(config.packages[0].id, 'childCrossedPrice', e.target.value ? Number(e.target.value) : 0)}
+                      className="mt-1 h-9 text-sm"
+                      min="0"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">Edad Mínima</Label>
+                    <Input type="number" value={config.packages[0].childAgeMin || 0} onChange={(e) => updatePkg(config.packages[0].id, 'childAgeMin', Number(e.target.value))} className="mt-1 h-9 text-sm" min="0" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Edad Máxima</Label>
+                    <Input type="number" value={config.packages[0].childAgeMax || 0} onChange={(e) => updatePkg(config.packages[0].id, 'childAgeMax', Number(e.target.value))} className="mt-1 h-9 text-sm" min="0" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-xs">Precio Infante (USD)</Label>
+                    <Input type="number" value={config.packages[0].infantPrice || 0} onChange={(e) => updatePkg(config.packages[0].id, 'infantPrice', Number(e.target.value))} className="mt-1 h-9 text-sm" min="0" />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Edad Máx Infante</Label>
+                    <Input type="number" value={config.packages[0].infantAgeMax || 0} onChange={(e) => updatePkg(config.packages[0].id, 'infantAgeMax', Number(e.target.value))} className="mt-1 h-9 text-sm" min="0" />
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
+        )}
+
+        {/* Multiple Package Mode */}
+        {config.package_type === 'multiple' && (
+          <div className="space-y-2">
+            {config.packages.map((pkg) => (
+              <Collapsible
+                key={pkg.id}
+                open={expandedPkgs.includes(pkg.id)}
+                onOpenChange={() => togglePkgExpand(pkg.id)}
+              >
+                <div className="bg-slate-50 rounded-lg border border-slate-200">
+                  <CollapsibleTrigger asChild>
+                    <div className="flex items-center justify-between p-3 cursor-pointer hover:bg-slate-100/50 transition-colors rounded-t-lg">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-slate-900 text-sm">{pkg.name || 'Sin nombre'}</span>
+                        {pkg.isDefault && (
+                          <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-medium rounded-full">Default</span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-slate-400 hover:text-red-500"
+                          onClick={(e) => { e.stopPropagation(); removePkg(pkg.id); }}
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </Button>
+                        {expandedPkgs.includes(pkg.id) ? <ChevronUp className="w-4 h-4 text-slate-400" /> : <ChevronDown className="w-4 h-4 text-slate-400" />}
+                      </div>
+                    </div>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    <div className="px-3 pb-3 border-t border-slate-100">
+                      <Tabs
+                        value={activeTabs[pkg.id] || 'general'}
+                        onValueChange={(val) => setActiveTabs({ ...activeTabs, [pkg.id]: val })}
+                        className="mt-3"
+                      >
+                        <TabsList className="bg-white border border-slate-200 p-0.5 h-auto">
+                          <TabsTrigger value="general" className="data-[state=active]:bg-[#3546A6] data-[state=active]:text-white text-xs py-1.5">General</TabsTrigger>
+                          <TabsTrigger value="adult" className="data-[state=active]:bg-[#3546A6] data-[state=active]:text-white text-xs py-1.5">Adultos</TabsTrigger>
+                          <TabsTrigger value="child" className="data-[state=active]:bg-[#3546A6] data-[state=active]:text-white text-xs py-1.5">Niños</TabsTrigger>
+                          <TabsTrigger value="details" className="data-[state=active]:bg-[#3546A6] data-[state=active]:text-white text-xs py-1.5">Detalles</TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="general" className="mt-3 space-y-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs">Nombre del Paquete</Label>
+                              <Input value={pkg.name} onChange={(e) => updatePkg(pkg.id, 'name', e.target.value)} className="mt-1 h-9 text-sm" placeholder="Habitación Doble" />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Etiqueta</Label>
+                              <Input value={pkg.label} onChange={(e) => updatePkg(pkg.id, 'label', e.target.value)} className="mt-1 h-9 text-sm" placeholder="Por persona" />
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 p-2 bg-white rounded-lg">
+                            <Checkbox id={`date-default-${pkg.id}`} checked={pkg.isDefault} onCheckedChange={(checked) => updatePkg(pkg.id, 'isDefault', checked)} />
+                            <label htmlFor={`date-default-${pkg.id}`} className="text-xs font-medium text-slate-700 cursor-pointer">Hacer predeterminado</label>
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="adult" className="mt-3 space-y-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs">Precio (USD)</Label>
+                              <Input type="number" value={pkg.adultPrice} onChange={(e) => updatePkg(pkg.id, 'adultPrice', Number(e.target.value))} className="mt-1 h-9 text-sm" min="0" />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Precio Tachado</Label>
+                              <Input type="number" value={pkg.adultCrossedPrice || ''} onChange={(e) => updatePkg(pkg.id, 'adultCrossedPrice', e.target.value ? Number(e.target.value) : 0)} className="mt-1 h-9 text-sm" min="0" />
+                            </div>
+                          </div>
+                          <div className="p-2 bg-blue-50 rounded text-xs text-blue-700">
+                            <strong>Precio:</strong> ${pkg.adultPrice.toLocaleString()} USD
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="child" className="mt-3 space-y-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs">Precio Niño (USD)</Label>
+                              <Input type="number" value={pkg.childPrice} onChange={(e) => updatePkg(pkg.id, 'childPrice', Number(e.target.value))} className="mt-1 h-9 text-sm" min="0" />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Precio Tachado</Label>
+                              <Input type="number" value={pkg.childCrossedPrice || ''} onChange={(e) => updatePkg(pkg.id, 'childCrossedPrice', e.target.value ? Number(e.target.value) : 0)} className="mt-1 h-9 text-sm" min="0" />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs">Edad Min</Label>
+                              <Input type="number" value={pkg.childAgeMin} onChange={(e) => updatePkg(pkg.id, 'childAgeMin', Number(e.target.value))} className="mt-1 h-9 text-sm" min="0" />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Edad Max</Label>
+                              <Input type="number" value={pkg.childAgeMax} onChange={(e) => updatePkg(pkg.id, 'childAgeMax', Number(e.target.value))} className="mt-1 h-9 text-sm" min="0" />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div>
+                              <Label className="text-xs">Precio Infante</Label>
+                              <Input type="number" value={pkg.infantPrice} onChange={(e) => updatePkg(pkg.id, 'infantPrice', Number(e.target.value))} className="mt-1 h-9 text-sm" min="0" />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Edad Max Infante</Label>
+                              <Input type="number" value={pkg.infantAgeMax} onChange={(e) => updatePkg(pkg.id, 'infantAgeMax', Number(e.target.value))} className="mt-1 h-9 text-sm" min="0" />
+                            </div>
+                          </div>
+                        </TabsContent>
+
+                        <TabsContent value="details" className="mt-3 space-y-3">
+                          <div>
+                            <Label className="text-xs">Detalles Adicionales</Label>
+                            <Textarea value={pkg.details} onChange={(e) => updatePkg(pkg.id, 'details', e.target.value)} className="mt-1 min-h-[80px] text-sm" placeholder="Notas sobre este paquete..." />
+                          </div>
+                        </TabsContent>
+                      </Tabs>
+                    </div>
+                  </CollapsibleContent>
+                </div>
+              </Collapsible>
+            ))}
+
+            <Button type="button" variant="outline" onClick={addPkg} className="w-full border-dashed border-2 border-slate-300 hover:border-[#3546A6] h-9 text-sm">
+              <Plus className="w-3 h-3 mr-1" />
+              Agregar Paquete
+            </Button>
+          </div>
+        )}
+
+        {/* Starting Price for this date */}
+        <div>
+          <Label className="text-xs">Precio "Desde" para esta fecha (opcional)</Label>
+          <Input
+            type="number"
+            value={config.starting_price_from ?? ''}
+            onChange={(e) => updateConfig({ starting_price_from: e.target.value ? Number(e.target.value) : null })}
+            className="mt-1 h-9 text-sm"
+            placeholder="Desde $XXX USD"
+            min="0"
+          />
+        </div>
+      </div>
+    </TooltipProvider>
+  );
+}
+// ============================
+// End DatePricingEditor
+// ============================
+
 export default function TourEditPage({ initialTour, destinations }: TourEditPageProps) {
   const [tour, setTour] = useState<Tour>(initialTour);
   const [isSaving, setIsSaving] = useState(false);
   const [isSavingGeneral, setIsSavingGeneral] = useState(false);
   const [isSavingImages, setIsSavingImages] = useState(false);
   const [isSavingPricing, setIsSavingPricing] = useState(false);
+  const [isSavingReferencePrice, setIsSavingReferencePrice] = useState(false);
   const [isSavingDates, setIsSavingDates] = useState(false);
   const [isSavingItinerary, setIsSavingItinerary] = useState(false);
   const [isSavingIncludes, setIsSavingIncludes] = useState(false);
@@ -172,6 +517,9 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
   const [status, setStatus] = useState(initialTour.status || 'draft');
   
   // Pricing state
+  const [useGeneralPricing, setUseGeneralPricing] = useState<boolean>(
+    (initialTour as any).use_general_pricing !== false
+  );
   const [packageType, setPackageType] = useState<'single' | 'multiple'>(
     (initialTour as any).package_type || 'single'
   );
@@ -263,6 +611,8 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
           repeat_enabled: d.repeat_enabled || false,
           repeat_pattern: d.repeat_pattern,
           repeat_until: d.repeat_until,
+          has_price_override: d.has_price_override || false,
+          price_override_config: d.price_override_config || null,
           package_overrides: packagesSnapshot.map(pkg => {
             const existing = d.package_overrides?.find((po: any) => po.package_id === pkg.id);
             return {
@@ -346,6 +696,8 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
         notes: '',
         blocked_dates: [],
       })),
+      has_price_override: false,
+      price_override_config: null,
       isNew: true,
     };
     setDates([...dates, newDate]);
@@ -457,6 +809,26 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
     }
   };
 
+  // Save only the reference price (independent of pricing configuration)
+  const handleSaveReferencePrice = async () => {
+    setIsSavingReferencePrice(true);
+    try {
+      const { error } = await supabase
+        .from('tours')
+        .update({
+          starting_price_from: startingPriceFrom,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', tour.id);
+      if (error) throw error;
+      showSavedFeedback('reference-price');
+    } catch (error) {
+      alert('Error al guardar precio de referencia');
+    } finally {
+      setIsSavingReferencePrice(false);
+    }
+  };
+
   const handleSavePricing = async () => {
     setIsSavingPricing(true);
     try {
@@ -469,7 +841,7 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
           package_type: packageType,
           primary_price_category: primaryCategory,
           price_packages: packages,
-          starting_price_from: startingPriceFrom,
+          use_general_pricing: useGeneralPricing,
           updated_at: new Date().toISOString(),
         })
         .eq('id', tour.id);
@@ -497,6 +869,8 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
             repeat_enabled: date.repeat_enabled,
             repeat_pattern: date.repeat_enabled ? date.repeat_pattern : null,
             repeat_until: date.repeat_enabled ? date.repeat_until : null,
+            has_price_override: date.has_price_override,
+            price_override_config: date.has_price_override ? date.price_override_config : null,
           }, { onConflict: 'id' })
           .select()
           .single();
@@ -1133,7 +1507,70 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
               </div>
               
               <TooltipProvider>
-                {/* Package Type Selection */}
+                {/* Reference Price - Always Independent and Visible */}
+                <div className="bg-white rounded-lg border border-slate-200 p-6 mb-4">
+                  <h3 className="font-semibold text-slate-900 mb-1 text-base">Precio de Referencia</h3>
+                  <p className="text-sm text-slate-500 mb-4">
+                    Se mostrará en las tarjetas del tour (independiente de la configuración de precios)
+                  </p>
+                  <div>
+                    <Label>Precio "Desde"</Label>
+                    <Input
+                      type="number"
+                      value={startingPriceFrom ?? ''}
+                      onChange={(e) => setStartingPriceFrom(e.target.value ? Number(e.target.value) : null)}
+                      className="mt-1.5"
+                      placeholder="Para mostrar 'Desde $XXX USD'"
+                      min="0"
+                    />
+                    <p className="text-sm text-slate-500 mt-1">
+                      {startingPriceFrom ? `Se mostrará como "Desde $${startingPriceFrom.toLocaleString()} USD"` : 'Se usará el precio del paquete por defecto'}
+                    </p>
+                  </div>
+
+                  {/* Independent Save Button for Reference Price */}
+                  <div className="flex justify-end pt-6 mt-6 border-t">
+                    <SaveButton onClick={handleSaveReferencePrice} isSaving={isSavingReferencePrice} sectionKey="reference-price" />
+                  </div>
+                </div>
+
+                {/* General Pricing Toggle */}
+                <div className="bg-white rounded-lg border border-slate-200 p-6 mb-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="flex items-center gap-2 text-base font-semibold">
+                        Usar precios generales
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <HelpCircle className="w-4 h-4 text-slate-400" />
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p className="max-w-xs">Cuando está activo, estos precios aplican a todas las fechas que no tengan un precio propio configurado. Si se desactiva, solo se aplicarán precios por fecha.</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </Label>
+                      <p className="text-sm text-slate-500 mt-1">
+                        {useGeneralPricing 
+                          ? 'Los precios generales se aplicarán a todas las fechas sin precio propio'
+                          : 'Los precios generales están desactivados. Solo se usarán precios por fecha.'}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={useGeneralPricing}
+                      onCheckedChange={setUseGeneralPricing}
+                    />
+                  </div>
+                  {!useGeneralPricing && (
+                    <div className="mt-3 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                      <p className="text-sm text-amber-700">
+                        ⚠️ Los precios generales están desactivados. Cada fecha debe tener su propio precio configurado para poder ser reservada.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Package Type Selection - Only visible when general pricing is ON */}
+                <div className={cn(!useGeneralPricing && "opacity-50 pointer-events-none")}>
                 <div className="bg-white rounded-lg border border-slate-200 p-6 mb-4">
                   <div className="space-y-6">
                     {/* Package Type Toggle */}
@@ -1805,25 +2242,7 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                 </div>
                 )}
 
-                {/* Starting Price - Optional */}
-                <div className="bg-white rounded-lg border border-slate-200 p-6 mt-4">
-                  <h3 className="font-semibold text-slate-900 mb-1">Precio de Referencia</h3>
-                  <p className="text-sm text-slate-500 mb-4">Se mostrará en las tarjetas del tour</p>
-                  <div>
-                    <Label>Precio "Desde" (opcional)</Label>
-                    <Input
-                      type="number"
-                      value={startingPriceFrom ?? ''}
-                      onChange={(e) => setStartingPriceFrom(e.target.value ? Number(e.target.value) : null)}
-                      className="mt-1.5"
-                      placeholder="Para mostrar 'Desde $XXX USD'"
-                      min="0"
-                    />
-                    <p className="text-sm text-slate-500 mt-1">
-                      {startingPriceFrom ? `Se mostrará como "Desde $${startingPriceFrom.toLocaleString()} USD"` : 'Se usará el precio del paquete por defecto'}
-                    </p>
-                  </div>
-                </div>
+                </div>{/* Close general pricing wrapper */}
                 
                 {/* Save Button at bottom */}
                 <div className="flex justify-end pt-6 mt-6 border-t">
@@ -2017,6 +2436,48 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                                   ∞ Ilimitado
                                 </Button>
                               </div>
+                            </div>
+
+                            {/* Date-Specific Pricing Override */}
+                            <div className="border border-slate-200 rounded-lg p-4 space-y-4">
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <Label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                                    <DollarSign className="w-4 h-4" />
+                                    Precio por Fecha
+                                  </Label>
+                                  <p className="text-xs text-slate-500 mt-0.5">
+                                    {date.has_price_override 
+                                      ? 'Esta fecha tiene su propio precio configurado'
+                                      : useGeneralPricing 
+                                        ? 'Usará los precios generales del tour'
+                                        : '⚠️ Sin precios generales ni por fecha — no reservable'}
+                                  </p>
+                                </div>
+                                <Switch
+                                  checked={date.has_price_override}
+                                  onCheckedChange={(checked) => {
+                                    updateDate(date.id, 'has_price_override', checked);
+                                    if (checked && !date.price_override_config) {
+                                      // Initialize with default config copying from general pricing
+                                      const defaultDateConfig: LocalDatePriceConfig = {
+                                        package_type: packageType,
+                                        primary_price_category: primaryCategory,
+                                        packages: packages.map(pkg => ({ ...pkg, id: crypto.randomUUID() })),
+                                        starting_price_from: startingPriceFrom,
+                                      };
+                                      updateDate(date.id, 'price_override_config', defaultDateConfig);
+                                    }
+                                  }}
+                                />
+                              </div>
+
+                              {date.has_price_override && date.price_override_config && (
+                                <DatePricingEditor
+                                  config={date.price_override_config}
+                                  onChange={(newConfig) => updateDate(date.id, 'price_override_config', newConfig)}
+                                />
+                              )}
                             </div>
                           </div>
                         </CollapsibleContent>
