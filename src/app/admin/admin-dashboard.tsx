@@ -153,7 +153,7 @@ export default function AdminDashboard({ initialTours, destinations }: AdminDash
                     {tour.destination?.name || '-'}
                   </TableCell>
                   <TableCell className="font-medium text-tc-purple-deep">
-                    ${tour.price_usd?.toLocaleString()}
+                    ${tour.base_price_usd?.toLocaleString()}
                   </TableCell>
                   <TableCell className="text-tc-purple-deep/70">
                     {tour.duration_days} días
@@ -232,7 +232,7 @@ export default function AdminDashboard({ initialTours, destinations }: AdminDash
           <div className="bg-white rounded-xl border border-tc-purple-light/20 p-6">
             <p className="text-sm text-tc-purple-deep/60">Precio Promedio</p>
             <p className="text-3xl font-bold text-tc-purple-deep">
-              ${Math.round(tours.reduce((acc, t) => acc + (t.price_usd || 0), 0) / tours.length || 0).toLocaleString()}
+              ${Math.round(tours.reduce((acc, t) => acc + (t.base_price_usd || 0), 0) / tours.length || 0).toLocaleString()}
             </p>
           </div>
         </div>

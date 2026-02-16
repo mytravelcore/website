@@ -39,7 +39,7 @@ interface GeneralFormData {
   destination_id: string;
   featured: boolean;
   hero_image_url: string;
-  difficulty_level: string;
+  difficulty: string;
   age_min: number;
   age_max: number;
   activities: string[];
@@ -49,7 +49,7 @@ interface GeneralFormData {
 // Default options that can be extended
 const defaultDestinations = ['Suramérica', 'Europa', 'Asia', 'África', 'Norteamérica', 'Oceanía'];
 const defaultActivities = ['Cultural', 'Aventura', 'Naturaleza', 'Playa', 'Historia', 'Gastronomía'];
-const defaultDifficultyLevels = ['Facil', 'Moderado', 'Difícil', 'Intenso'];
+const defaultDifficultyLevels = ['Fácil', 'Moderado', 'Difícil', 'Intenso'];
 
 export default function GeneralPage() {
   const params = useParams();
@@ -61,6 +61,7 @@ export default function GeneralPage() {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [loadError, setLoadError] = useState<PostgrestError | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [galleryImages, setGalleryImages] = useState<string[]>([]);
   const [heroImageUrl, setHeroImageUrl] = useState<string>('');
   
@@ -122,16 +123,18 @@ export default function GeneralPage() {
       const tourData = tourResult.data;
       setTour(tourData);
       setDestinations(destResult.data || []);
-      setGalleryImages(tourData.gallery_image_urls || []);
+      setGalleryImages(tourData.gallery_images || []);
       setHeroImageUrl(tourData.hero_image_url || '');
       setDurationDays(tourData.duration_days || 1);
       setTourType(tourData.duration_days > 1 ? 'multiday' : 'activity');
       setAgeRange([tourData.age_min || 10, tourData.age_max || 70]);
-      setSelectedDifficulty(tourData.difficulty_level || '');
+      setSelectedDifficulty(tourData.difficulty || '');
       
-      // Parse destinations and activities
+      // Parse destinations and activities from labels if available
       if (tourData.destination_name) {
         setSelectedDestinations(tourData.destination_name.split(',').map((s: string) => s.trim()).filter(Boolean));
+      } else if (tourData.destination?.name) {
+        setSelectedDestinations([tourData.destination.name]);
       }
       if (tourData.activities_label) {
         setSelectedActivities(tourData.activities_label.split(',').map((s: string) => s.trim()).filter(Boolean));
@@ -153,26 +156,28 @@ export default function GeneralPage() {
 
   const onSubmit = async (data: GeneralFormData) => {
     setIsSaving(true);
+    setSaveSuccess(false);
     try {
       const supabase = createClient();
 
+      // Build update object with only valid DB columns
+      const updateData: Record<string, any> = {
+        title: data.title,
+        slug: data.slug,
+        short_description: data.short_description || null,
+        long_description: data.long_description || null,
+        duration_days: tourType === 'activity' ? 1 : durationDays,
+        difficulty: selectedDifficulty || null,
+        age_min: ageRange[0],
+        age_max: ageRange[1],
+        gallery_images: galleryImages,
+        hero_image_url: heroImageUrl || null,
+        updated_at: new Date().toISOString(),
+      };
+
       const { error } = await supabase
         .from('tours')
-        .update({
-          title: data.title,
-          slug: data.slug,
-          short_description: data.short_description || null,
-          long_description: data.long_description || null,
-          duration_days: tourType === 'activity' ? 1 : durationDays,
-          difficulty_level: selectedDifficulty || null,
-          destination_name: selectedDestinations.join(', ') || null,
-          activities_label: selectedActivities.join(', ') || null,
-          age_min: ageRange[0],
-          age_max: ageRange[1],
-          tour_label: data.tour_label || null,
-          gallery_image_urls: galleryImages,
-          hero_image_url: heroImageUrl || null,
-        })
+        .update(updateData)
         .eq('id', tourId);
 
       if (error) throw error;
@@ -187,9 +192,13 @@ export default function GeneralPage() {
       if (updatedTour) {
         setTour(updatedTour);
       }
-    } catch (error) {
+      
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+    } catch (error: any) {
       console.error('Error saving tour:', error);
-      alert('Error al guardar el tour');
+      const errorMessage = error?.message || error?.error_description || 'Error desconocido';
+      alert(`Error al guardar: ${errorMessage}`);
     } finally {
       setIsSaving(false);
     }
@@ -292,8 +301,9 @@ export default function GeneralPage() {
                     src={heroImageUrl}
                     alt="Hero preview"
                     className="w-full h-full object-cover"
+                    referrerPolicy="no-referrer"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23f1f5f9" width="100" height="100"/><text x="50" y="50" text-anchor="middle" dy=".3em" fill="%2394a3b8" font-size="12">Error</text></svg>';
+                      (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"><rect fill="%23f1f5f9" width="400" height="200"/><text x="200" y="100" text-anchor="middle" dy=".3em" fill="%2394a3b8" font-size="14">No se pudo cargar la imagen</text></svg>';
                     }}
                   />
                   <button
@@ -597,7 +607,12 @@ export default function GeneralPage() {
             </div>
 
             {/* Save Button */}
-            <div className="flex justify-end pt-4">
+            <div className="flex items-center justify-end gap-4 pt-4">
+              {saveSuccess && (
+                <span className="text-sm text-green-600 font-medium animate-in fade-in">
+                  ✓ Cambios guardados exitosamente
+                </span>
+              )}
               <Button 
                 type="submit" 
                 disabled={isSaving}
@@ -638,8 +653,9 @@ export default function GeneralPage() {
                     src={url} 
                     alt={`Gallery ${index + 1}`} 
                     className="w-full h-full object-cover rounded-lg"
+                    referrerPolicy="no-referrer"
                     onError={(e) => {
-                      (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23f1f5f9" width="100" height="100"/><text x="50" y="50" text-anchor="middle" dy=".3em" fill="%2394a3b8" font-size="12">Error</text></svg>';
+                      (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23f1f5f9" width="100" height="100"/><text x="50" y="50" text-anchor="middle" dy=".3em" fill="%2394a3b8" font-size="10">Error</text></svg>';
                     }}
                   />
                   <button

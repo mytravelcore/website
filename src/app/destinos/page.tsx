@@ -8,6 +8,10 @@ export const metadata = {
   description: 'Explora nuestros destinos y encuentra tu próxima aventura.',
 };
 
+// Force dynamic rendering to always fetch fresh data
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function DestinosPage() {
   const supabase = await createClient();
   

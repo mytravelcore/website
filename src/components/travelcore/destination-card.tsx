@@ -22,6 +22,7 @@ export default function DestinationCard({ destination, tourCount = 0 }: Destinat
         alt={destination.name}
         fill
         className="object-cover group-hover:scale-110 transition-transform duration-700"
+        unoptimized
       />
       
       {/* Gradient Overlay */}

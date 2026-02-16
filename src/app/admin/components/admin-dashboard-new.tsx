@@ -67,13 +67,15 @@ interface AdminDashboardProps {
   initialActivities: ActivityType[];
 }
 
+// Stable singleton client – avoids creating a new instance on every render
+const supabase = createClient();
+
 export default function AdminDashboard({ 
   initialTours, 
   initialDestinations, 
   initialActivities 
 }: AdminDashboardProps) {
   const router = useRouter();
-  const supabase = createClient();
 
   // State
   const [activeTab, setActiveTab] = useState<NavTab>("panel");
@@ -198,7 +200,8 @@ export default function AdminDashboard({
       supabase.removeChannel(destinationsChannel);
       supabase.removeChannel(activitiesChannel);
     };
-  }, [supabase]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Filtered data
   const filteredTours = tours.filter(

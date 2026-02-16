@@ -42,7 +42,7 @@ import { createClient } from '@/supabase/client';
 import { 
   Save, Loader2, X, FileText, Image as ImageIcon, DollarSign, 
   Calendar, Map, List, Plus, Trash2, ChevronDown, ChevronUp,
-  Clock, Users, Repeat, Check, HelpCircle
+  Clock, Users, Repeat, Check, HelpCircle, Wand2, Upload
 } from 'lucide-react';
 import ImageUpload from '@/components/admin/image-upload';
 import { cn } from '@/lib/utils';
@@ -163,10 +163,10 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
   const [shortDescription, setShortDescription] = useState(initialTour.short_description || '');
   const [longDescription, setLongDescription] = useState(initialTour.long_description || '');
   const [heroImageUrl, setHeroImageUrl] = useState(initialTour.hero_image_url || '');
-  const [galleryImages, setGalleryImages] = useState<string[]>(initialTour.gallery_image_urls || []);
+  const [galleryImages, setGalleryImages] = useState<string[]>(initialTour.gallery_images || []);
   const [durationDays, setDurationDays] = useState(initialTour.duration_days || 1);
-  const [priceUsd, setPriceUsd] = useState(initialTour.price_usd || 0);
-  const [difficultyLevel, setDifficultyLevel] = useState(initialTour.difficulty_level || '');
+  const [priceUsd, setPriceUsd] = useState(initialTour.base_price_usd || 0);
+  const [difficultyLevel, setDifficultyLevel] = useState(initialTour.difficulty || '');
   const [destinationId, setDestinationId] = useState(initialTour.destination_id || '');
   const [featured, setFeatured] = useState(initialTour.featured || false);
   const [status, setStatus] = useState(initialTour.status || 'draft');
@@ -189,7 +189,7 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
       id: crypto.randomUUID(),
       name: 'Habitación Doble',
       isDefault: true,
-      adultPrice: initialTour.price_usd || 0,
+      adultPrice: initialTour.base_price_usd || 0,
     }];
   });
   const [expandedPackages, setExpandedPackages] = useState<string[]>(() => {
@@ -212,13 +212,17 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
   const [datesLoading, setDatesLoading] = useState(true);
   
   // Itinerary
-  const [itineraryDays, setItineraryDays] = useState<any[]>(initialTour.itinerary_days || []);
+  const [itineraryDays, setItineraryDays] = useState<any[]>(initialTour.itinerary || []);
+  const [showBulkItinerary, setShowBulkItinerary] = useState(false);
+  const [bulkItineraryText, setBulkItineraryText] = useState('');
   
   // Includes
   const [includes, setIncludes] = useState<string[]>(initialTour.includes || []);
   const [excludes, setExcludes] = useState<string[]>(initialTour.excludes || []);
-  const [newInclude, setNewInclude] = useState('');
-  const [newExclude, setNewExclude] = useState('');
+  const [showBulkIncludes, setShowBulkIncludes] = useState(false);
+  const [bulkIncludesText, setBulkIncludesText] = useState('');
+  const [showBulkExcludes, setShowBulkExcludes] = useState(false);
+  const [bulkExcludesText, setBulkExcludesText] = useState('');
   
   // FAQs
   const [faqs, setFaqs] = useState<{question: string; answer: string}[]>(initialTour.faqs || []);
@@ -226,6 +230,9 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
   const supabase = createClient();
 
   // Load dates on mount
+  // IMPORTANT: do NOT depend on `packages` here.
+  // Depending on `packages` causes this effect to re-run whenever packages are derived/updated,
+  // which can lead to a render loop in the Tempo storyboard (heartbeat stops).
   useEffect(() => {
     async function loadDates() {
       const { data: datesData, error: datesError } = await supabase
@@ -242,6 +249,9 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
 
       console.log('Edit page dates loaded:', { datesData, datesError });
 
+      // Snapshot packages at load time to avoid coupling dates formatting to live package state
+      const packagesSnapshot = packages;
+
       if (datesData && datesData.length > 0) {
         const formattedDates: LocalTourDate[] = datesData.map((d: any) => ({
           id: d.id,
@@ -251,7 +261,7 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
           repeat_enabled: d.repeat_enabled || false,
           repeat_pattern: d.repeat_pattern,
           repeat_until: d.repeat_until,
-          package_overrides: packages.map(pkg => {
+          package_overrides: packagesSnapshot.map(pkg => {
             const existing = d.package_overrides?.find((po: any) => po.package_id === pkg.id);
             return {
               package_id: pkg.id,
@@ -404,7 +414,7 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
           short_description: shortDescription || null,
           long_description: longDescription || null,
           duration_days: durationDays,
-          difficulty_level: difficultyLevel || null,
+          difficulty: difficultyLevel || null,
           destination_id: destinationId || null,
           featured,
           status,
@@ -414,10 +424,11 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
       if (error) throw error;
       showSavedFeedback('general');
     } catch (error: any) {
+      console.error('Error saving general info:', error);
       if (error.code === '23505') {
         alert('Ya existe un tour con ese slug');
       } else {
-        alert('Error al guardar');
+        alert(`Error al guardar: ${error.message || 'Error desconocido'}`);
       }
     } finally {
       setIsSavingGeneral(false);
@@ -431,7 +442,7 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
         .from('tours')
         .update({
           hero_image_url: heroImageUrl || null,
-          gallery_image_urls: galleryImages.length > 0 ? galleryImages : null,
+          gallery_images: galleryImages.length > 0 ? galleryImages : null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', tour.id);
@@ -452,7 +463,7 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
       const { error } = await supabase
         .from('tours')
         .update({
-          price_usd: mainPrice,
+          base_price_usd: mainPrice,
           package_type: packageType,
           primary_price_category: primaryCategory,
           price_packages: packages,
@@ -535,7 +546,7 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
       const { error } = await supabase
         .from('tours')
         .update({
-          itinerary_days: itineraryDays.length > 0 ? itineraryDays : null,
+          itinerary: itineraryDays.length > 0 ? itineraryDays : null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', tour.id);
@@ -588,14 +599,14 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
           short_description: shortDescription || null,
           long_description: longDescription || null,
           hero_image_url: heroImageUrl || null,
-          gallery_image_urls: galleryImages.length > 0 ? galleryImages : null,
+          gallery_images: galleryImages.length > 0 ? galleryImages : null,
           duration_days: durationDays,
-          price_usd: mainPrice,
-          difficulty_level: difficultyLevel || null,
+          base_price_usd: mainPrice,
+          difficulty: difficultyLevel || null,
           destination_id: destinationId || null,
           featured,
           status,
-          itinerary_days: itineraryDays.length > 0 ? itineraryDays : null,
+          itinerary: itineraryDays.length > 0 ? itineraryDays : null,
           includes: includes.length > 0 ? includes : null,
           excludes: excludes.length > 0 ? excludes : null,
           faqs: faqs.length > 0 ? faqs : null,
@@ -618,10 +629,10 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
         short_description: shortDescription,
         long_description: longDescription,
         hero_image_url: heroImageUrl,
-        gallery_image_urls: galleryImages,
+        gallery_images: galleryImages,
         duration_days: durationDays,
-        price_usd: priceUsd,
-        difficulty_level: difficultyLevel,
+        base_price_usd: priceUsd,
+        difficulty: difficultyLevel,
         destination_id: destinationId,
         featured,
         status,
@@ -682,6 +693,55 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
     }
   };
 
+   const parseBulkIncludes = (text: string) => {
+     return text
+       .split('\n')
+       .map(line => {
+         const trimmed = line.trim();
+         return trimmed.replace(/^[✓✗\s-]+/, '').trim();
+       })
+       .filter(line => line.length > 0);
+   };
+
+   const handleBulkIncludesImport = () => {
+     if (!bulkIncludesText.trim()) {
+       alert('Por favor ingresa los items del incluye/excluye');
+       return;
+     }
+
+     const lines = bulkIncludesText.split('\n');
+     const newIncludes: string[] = [];
+     const newExcludes: string[] = [];
+
+     for (const line of lines) {
+       const trimmed = line.trim();
+       if (trimmed.length === 0) continue;
+       
+       const isInclude = trimmed.startsWith('✓');
+       const isExclude = trimmed.startsWith('✗');
+       const text = trimmed.replace(/^[✓✗\s-]+/, '').trim();
+       
+       if (text.length > 0) {
+         if (isExclude) {
+           newExcludes.push(text);
+         } else {
+           newIncludes.push(text);
+         }
+       }
+     }
+
+     if (newIncludes.length === 0 && newExcludes.length === 0) {
+       alert('No se detectaron items válidos. Asegúrate de usar ✓ o ✗ al principio de cada línea.');
+       return;
+     }
+
+     if (newIncludes.length > 0) setIncludes([...includes, ...newIncludes]);
+     if (newExcludes.length > 0) setExcludes([...excludes, ...newExcludes]);
+     
+     setBulkIncludesText('');
+     setShowBulkIncludes(false);
+   };
+
   const addFaq = () => {
     setFaqs([...faqs, { question: '', answer: '' }]);
   };
@@ -694,6 +754,64 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
 
   const removeFaq = (index: number) => {
     setFaqs(faqs.filter((_, i) => i !== index));
+  };
+
+  // Parsing function for bulk itinerary input
+  const parseBulkItinerary = (text: string) => {
+    const lines = text.trim().split('\n');
+    const days: any[] = [];
+    let currentDay: any = null;
+    let dayNumber = 1;
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i].trim();
+      if (!line) continue;
+
+      // Check if line starts with "Día X:" or "Day X:"
+      const dayMatch = line.match(/^(día|day)\s*(\d+)\s*[:]\s*(.+)/i);
+      
+      if (dayMatch) {
+        // Save previous day if exists
+        if (currentDay) {
+          days.push(currentDay);
+        }
+        // Start new day
+        currentDay = {
+          day: dayNumber++,
+          title: dayMatch[3].trim(),
+          description: '',
+          activities: []
+        };
+      } else if (currentDay) {
+        // Add to description
+        currentDay.description += (currentDay.description ? '\n' : '') + line;
+      }
+    }
+    
+    // Add the last day
+    if (currentDay) {
+      days.push(currentDay);
+    }
+
+    return days;
+  };
+
+  const handleBulkItineraryImport = () => {
+    if (!bulkItineraryText.trim()) {
+      alert('Por favor ingresa el itinerario completo');
+      return;
+    }
+
+    const parsed = parseBulkItinerary(bulkItineraryText);
+    
+    if (parsed.length === 0) {
+      alert('No se detectaron días válidos. Usa el formato:\n\nDía 1: Título\nDescripción del día...\n\nDía 2: Título\nDescripción...');
+      return;
+    }
+
+    setItineraryDays(parsed);
+    setBulkItineraryText('');
+    setShowBulkItinerary(false);
   };
 
   const addItineraryDay = () => {
@@ -906,6 +1024,11 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                         src={heroImageUrl}
                         alt="Hero preview"
                         className="w-full h-full object-cover"
+                        referrerPolicy="no-referrer"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"><rect fill="%23f1f5f9" width="400" height="200"/><text x="200" y="100" text-anchor="middle" dy=".3em" fill="%2394a3b8" font-size="14">No se pudo cargar la imagen</text></svg>';
+                        }}
                       />
                       <button
                         type="button"
@@ -942,6 +1065,10 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                             src={url} 
                             alt={`Gallery ${index + 1}`} 
                             className="w-full h-full object-cover rounded-lg"
+                            referrerPolicy="no-referrer"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23f1f5f9" width="100" height="100"/><text x="50" y="50" text-anchor="middle" dy=".3em" fill="%2394a3b8" font-size="10">Error</text></svg>';
+                            }}
                           />
                           <button
                             type="button"
@@ -1866,8 +1993,43 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                   <Map className="w-5 h-5 text-[#3546A6]" />
                   Itinerario
                 </h2>
-                <SaveButton onClick={handleSaveItinerary} isSaving={isSavingItinerary} sectionKey="itinerary" />
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowBulkItinerary(!showBulkItinerary)}
+                  >
+                    <FileText className="w-4 h-4 mr-2" />
+                    {showBulkItinerary ? 'Cancelar' : 'Pegar itinerario completo'}
+                  </Button>
+                  <SaveButton onClick={handleSaveItinerary} isSaving={isSavingItinerary} sectionKey="itinerary" />
+                </div>
               </div>
+              
+              {showBulkItinerary && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                  <Label className="text-sm font-medium text-slate-700 mb-2 block">
+                    Pega el itinerario completo aquí (formato: Día 1: Título, seguido de descripción)
+                  </Label>
+                  <Textarea
+                    placeholder="Día 1: Llegada a Lima&#10;Recepción en el aeropuerto y traslado al hotel...&#10;&#10;Día 2: City tour&#10;Visita a los principales atractivos..."
+                    value={bulkItineraryText}
+                    onChange={(e) => setBulkItineraryText(e.target.value)}
+                    rows={10}
+                    className="font-mono text-sm"
+                  />
+                  <div className="flex gap-2 mt-3">
+                    <Button onClick={handleBulkItineraryImport} size="sm">
+                      <Upload className="w-4 h-4 mr-2" />
+                      Importar itinerario
+                    </Button>
+                    <Button variant="ghost" size="sm" onClick={() => setShowBulkItinerary(false)}>
+                      Cancelar
+                    </Button>
+                  </div>
+                </div>
+              )}
+              
               <div className="bg-white rounded-lg border border-slate-200 p-6 space-y-4">
                 {itineraryDays.map((day, index) => (
                   <div key={index} className="border border-slate-200 rounded-lg p-4">
@@ -1921,7 +2083,34 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                 <div className="grid md:grid-cols-2 gap-6">
                   {/* Includes */}
                   <div>
-                    <Label className="text-green-700 font-medium mb-3 block">✓ Incluye</Label>
+                    <div className="flex items-center justify-between mb-3">
+                      <Label className="text-green-700 font-medium">✓ Incluye</Label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowBulkIncludes(!showBulkIncludes)}
+                      >
+                        <FileText className="w-3 h-3 mr-1" />
+                        {showBulkIncludes ? 'Cancelar' : 'Pegar lista'}
+                      </Button>
+                    </div>
+                    
+                    {showBulkIncludes && (
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-3 mb-3">
+                        <Textarea
+                          placeholder="Pega la lista aquí (una por línea)&#10;- Transporte aeropuerto-hotel&#10;- Desayuno incluido&#10;- Guía turístico"
+                          value={bulkIncludesText}
+                          onChange={(e) => setBulkIncludesText(e.target.value)}
+                          rows={6}
+                          className="text-sm mb-2"
+                        />
+                        <Button onClick={handleBulkIncludesImport} size="sm">
+                          <Upload className="w-3 h-3 mr-1" />
+                          Importar
+                        </Button>
+                      </div>
+                    )}
+                    
                     <div className="space-y-2">
                       {includes.map((item, index) => (
                         <div key={index} className="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-lg">
@@ -1935,23 +2124,39 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                           </button>
                         </div>
                       ))}
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Agregar item..."
-                          value={newInclude}
-                          onChange={(e) => setNewInclude(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addInclude())}
-                        />
-                        <Button variant="outline" size="sm" onClick={addInclude}>
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
                     </div>
                   </div>
 
                   {/* Excludes */}
                   <div>
-                    <Label className="text-red-700 font-medium mb-3 block">✗ No Incluye</Label>
+                    <div className="flex items-center justify-between mb-3">
+                      <Label className="text-red-700 font-medium">✗ No Incluye</Label>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowBulkExcludes(!showBulkExcludes)}
+                      >
+                        <FileText className="w-3 h-3 mr-1" />
+                        {showBulkExcludes ? 'Cancelar' : 'Pegar lista'}
+                      </Button>
+                    </div>
+                    
+                    {showBulkExcludes && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-3 mb-3">
+                        <Textarea
+                          placeholder="Pega la lista aquí (una por línea)&#10;- Vuelos internacionales&#10;- Seguro de viaje&#10;- Propinas"
+                          value={bulkExcludesText}
+                          onChange={(e) => setBulkExcludesText(e.target.value)}
+                          rows={6}
+                          className="text-sm mb-2"
+                        />
+                        <Button onClick={handleBulkExcludesImport} size="sm">
+                          <Upload className="w-3 h-3 mr-1" />
+                          Importar
+                        </Button>
+                      </div>
+                    )}
+                    
                     <div className="space-y-2">
                       {excludes.map((item, index) => (
                         <div key={index} className="flex items-center gap-2 bg-red-50 px-3 py-2 rounded-lg">
@@ -1965,17 +2170,6 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                           </button>
                         </div>
                       ))}
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Agregar item..."
-                          value={newExclude}
-                          onChange={(e) => setNewExclude(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addExclude())}
-                        />
-                        <Button variant="outline" size="sm" onClick={addExclude}>
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
                     </div>
                   </div>
                 </div>

@@ -4,6 +4,10 @@ import Footer from "@/components/footer";
 import TourDetail from "./tour-detail";
 import { createClient } from "@/supabase/server";
 
+// Force dynamic rendering to always fetch fresh data
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const supabase = await createClient();
   const { data: tour } = await supabase

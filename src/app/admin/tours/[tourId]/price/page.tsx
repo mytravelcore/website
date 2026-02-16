@@ -173,7 +173,7 @@ export default function PricePage() {
             id: crypto.randomUUID(),
             name: 'Habitación Doble',
             isDefault: true,
-            adultPrice: tourData.base_price_usd || tourData.price_usd || 0,
+            adultPrice: tourData.base_price_usd || 0,
           };
           setPackages([defaultPkg]);
           setExpandedPackages([defaultPkg.id]);
@@ -202,7 +202,7 @@ export default function PricePage() {
       const { error } = await supabase
         .from('tours')
         .update({ 
-          price_usd: mainPrice,
+          base_price_usd: mainPrice,
           starting_price_from: startingPriceFrom,
           package_type: packageType,
           primary_price_category: primaryCategory,

@@ -32,6 +32,7 @@ export default function TourCard({ tour }: TourCardProps) {
             alt={tour.title}
             fill
             className="object-cover group-hover:scale-110 transition-transform duration-500"
+            unoptimized
           />
           <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
 

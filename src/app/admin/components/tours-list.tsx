@@ -260,7 +260,7 @@ export default function ToursList({ tours, destinations, onEditTour, onAddTour, 
                   {tour.duration_days} días
                 </TableCell>
                 <TableCell className="font-medium text-[#3546A6]">
-                  ${tour.price_usd?.toLocaleString()}
+                  ${tour.base_price_usd?.toLocaleString()}
                 </TableCell>
                 <TableCell>
                   {tour.featured ? (
@@ -360,7 +360,7 @@ export default function ToursList({ tours, destinations, onEditTour, onAddTour, 
         <div className="bg-white rounded-xl border border-slate-200 p-5">
           <p className="text-sm text-slate-500">Precio Promedio</p>
           <p className="text-3xl font-bold text-[#3546A6] mt-1">
-            ${Math.round(tours.reduce((acc, t) => acc + (t.price_usd || 0), 0) / tours.length || 0).toLocaleString()}
+            ${Math.round(tours.reduce((acc, t) => acc + (t.base_price_usd || 0), 0) / tours.length || 0).toLocaleString()}
           </p>
         </div>
       </div>

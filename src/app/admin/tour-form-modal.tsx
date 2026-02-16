@@ -47,7 +47,6 @@ interface TourFormData {
   hero_image_url: string;
   // Tour details fields
   destination_name: string;
-  difficulty_level: string;
   age_min: number | null;
   age_max: number | null;
   group_size_min: number | null;
@@ -112,7 +111,7 @@ export default function TourFormModal({
         slug: tour.slug,
         short_description: tour.short_description || "",
         long_description: tour.long_description || "",
-        price_usd: tour.price_usd || 0,
+        price_usd: tour.base_price_usd || 0,
         duration_days: tour.duration_days || 1,
         difficulty: tour.difficulty || "",
         destination_id: tour.destination_id || "",
@@ -124,7 +123,6 @@ export default function TourFormModal({
           typeof tour.destination === "string"
             ? tour.destination
             : (tour.destination?.name ?? ""),
-        difficulty_level: tour.difficulty_level || "",
         age_min: tour.age_min ?? null,
         age_max: tour.age_max ?? null,
         group_size_min: tour.group_size_min ?? null,
@@ -149,7 +147,6 @@ export default function TourFormModal({
         hero_image_url: "",
         // Tour details fields
         destination_name: "",
-        difficulty_level: "",
         age_min: null,
         age_max: null,
         group_size_min: null,
@@ -178,7 +175,7 @@ export default function TourFormModal({
         itinerary,
         includes,
         excludes,
-        gallery_image_urls: [],
+        gallery_images: [],
         // Clean number fields
         age_min: cleanNumber(data.age_min),
         age_max: cleanNumber(data.age_max),
@@ -186,8 +183,10 @@ export default function TourFormModal({
         group_size_max: cleanNumber(data.group_size_max),
         // Clean string fields
         destination_name: data.destination_name || null,
-        difficulty_level: data.difficulty_level || null,
+        difficulty: data.difficulty || null,
         activities_label: data.activities_label || null,
+        // Map price field
+        base_price_usd: data.price_usd,
       };
 
       if (tour) {
@@ -455,8 +454,8 @@ export default function TourFormModal({
               <div>
                 <Label>Nivel de Dificultad</Label>
                 <Select
-                  onValueChange={(value) => setValue("difficulty_level", value)}
-                  defaultValue={tour?.difficulty_level || ""}
+                  onValueChange={(value) => setValue("difficulty", value)}
+                  defaultValue={tour?.difficulty || ""}
                 >
                   <SelectTrigger className="mt-1.5">
                     <SelectValue placeholder="Seleccionar nivel" />

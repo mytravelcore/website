@@ -1,17 +1,25 @@
 "use client";
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { 
   MapPin, Clock, TrendingUp, Calendar, Check, X, 
   ChevronDown, ChevronUp, MessageCircle, ArrowRight,
-  Share2, Heart, CheckCircle, Zap, Shield, ChevronRight, PhoneCall
+  Share2, Heart, CheckCircle, Zap, Shield, ChevronRight, PhoneCall,
+  ChevronLeft, Maximize2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import * as DialogPrimitive from "@radix-ui/react-dialog";
 import TourCard from '@/components/travelcore/tour-card';
 import PackageSelector from '@/components/travelcore/package-selector';
 import AvailabilityCalendar from '@/components/travelcore/availability-calendar';
@@ -104,7 +112,8 @@ function clearTourCache() {
   }
 }
 
-export default function TourDetail({ tour, relatedTours, suggestedTours, packages: initialPackages, tourDates: initialDates }: TourDetailProps) {
+export default function TourDetail({ tour: initialTour, relatedTours, suggestedTours, packages: initialPackages, tourDates: initialDates }: TourDetailProps) {
+  const [tour, setTour] = useState(initialTour);
   const [expandedDays, setExpandedDays] = useState<number[]>([0]);
   const [selectedImage, setSelectedImage] = useState(0);
   const [selectedPackageId, setSelectedPackageId] = useState<string | null>(null);
@@ -113,6 +122,29 @@ export default function TourDetail({ tour, relatedTours, suggestedTours, package
   const [tourDates, setTourDates] = useState(initialDates);
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [showBookingModal, setShowBookingModal] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [lightboxIndex, setLightboxIndex] = useState(0);
+
+  // Sync tour data when initialTour changes (e.g., server re-render)
+  useEffect(() => {
+    setTour(initialTour);
+  }, [initialTour]);
+
+  // Fetch fresh tour data on mount (bypass any server-side cache)
+  useEffect(() => {
+    const supabase = createClient();
+    const fetchFreshTourData = async () => {
+      const { data } = await supabase
+        .from('tours')
+        .select('*, destination:destinations(*)')
+        .eq('id', initialTour.id)
+        .single();
+      if (data) {
+        setTour(data);
+      }
+    };
+    fetchFreshTourData();
+  }, [initialTour.id]);
 
   // Load calendar script when modal opens
   useEffect(() => {
@@ -187,9 +219,26 @@ export default function TourDetail({ tour, relatedTours, suggestedTours, package
       )
       .subscribe();
 
+    // Subscribe to tour changes (images, descriptions, etc.)
+    const tourChannel = supabase
+      .channel('tour-changes')
+      .on('postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'tours', filter: `id=eq.${tour.id}` },
+        async () => {
+          const { data } = await supabase
+            .from('tours')
+            .select('*, destination:destinations(*)')
+            .eq('id', tour.id)
+            .single();
+          if (data) setTour(data);
+        }
+      )
+      .subscribe();
+
     return () => {
       supabase.removeChannel(packagesChannel);
       supabase.removeChannel(datesChannel);
+      supabase.removeChannel(tourChannel);
     };
   }, [tour.id]);
 
@@ -212,7 +261,39 @@ export default function TourDetail({ tour, relatedTours, suggestedTours, package
   const itinerary = (tour.itinerary || []) as ItineraryDay[];
   const includes = (tour.includes || []) as string[];
   const excludes = (tour.excludes || []) as string[];
-  const galleryImages = [tour.hero_image_url, ...(tour.gallery_image_urls || [])].filter(Boolean) as string[];
+  const galleryImages = [tour.hero_image_url, ...(tour.gallery_images || [])].filter(Boolean) as string[];
+
+  // Lightbox navigation
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index);
+    setLightboxOpen(true);
+  };
+
+  const nextImage = useCallback(() => {
+    setLightboxIndex((prev) => (prev + 1) % galleryImages.length);
+  }, [galleryImages.length]);
+
+  const prevImage = useCallback(() => {
+    setLightboxIndex((prev) => (prev - 1 + galleryImages.length) % galleryImages.length);
+  }, [galleryImages.length]);
+
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    if (!lightboxOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') {
+        prevImage();
+      } else if (e.key === 'ArrowRight') {
+        nextImage();
+      } else if (e.key === 'Escape') {
+        setLightboxOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxOpen, nextImage, prevImage]);
 
   // Calculate starting price - support both camelCase and snake_case formats
   const startingPrice = useMemo(() => {
@@ -289,15 +370,28 @@ export default function TourDetail({ tour, relatedTours, suggestedTours, package
             initial={{ scale: 1.05 }}
             animate={{ scale: 1 }}
             transition={{ duration: 1.2, ease: "easeOut" }}
-            className="absolute inset-0"
+            className="absolute inset-0 cursor-pointer group"
+            onClick={() => openLightbox(selectedImage)}
           >
             <Image
-              src={galleryImages[selectedImage] || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1920&q=80'}
+              src={galleryImages[selectedImage] || tour.hero_image_url || 'https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1920&q=80'}
               alt={tour.title}
               fill
               className="object-cover"
               priority
+              unoptimized
             />
+            {/* Expand Button Overlay */}
+            <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <div className="bg-black/60 backdrop-blur-sm px-6 py-3 rounded-full border border-white/20">
+                <span className="text-white font-medium flex items-center gap-2">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                  </svg>
+                  Ver en grande
+                </span>
+              </div>
+            </div>
           </motion.div>
 
           {/* Gradient Overlays */}
@@ -391,10 +485,13 @@ export default function TourDetail({ tour, relatedTours, suggestedTours, package
                 {galleryImages.map((img, index) => (
                   <motion.button
                     key={index}
-                    onClick={() => setSelectedImage(index)}
+                    onClick={() => {
+                      setSelectedImage(index);
+                      openLightbox(index);
+                    }}
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
-                    className={`flex-shrink-0 relative ${
+                    className={`flex-shrink-0 relative group ${
                       selectedImage === index ? 'ring-2 ring-tc-orange' : 'ring-1 ring-transparent hover:ring-tc-purple-light/50'
                     } rounded-lg overflow-hidden transition-all`}
                   >
@@ -404,9 +501,14 @@ export default function TourDetail({ tour, relatedTours, suggestedTours, package
                         alt={`${tour.title} - ${index + 1}`}
                         fill
                         className={`object-cover transition-all ${
-                          selectedImage === index ? '' : 'grayscale-[30%] hover:grayscale-0'
+                          selectedImage === index ? '' : 'grayscale-[30%] group-hover:grayscale-0'
                         }`}
+                        unoptimized
                       />
+                      {/* Hover Expand Icon */}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Maximize2 className="w-6 h-6 text-white" />
+                      </div>
                     </div>
                   </motion.button>
                 ))}
@@ -955,6 +1057,7 @@ export default function TourDetail({ tour, relatedTours, suggestedTours, package
                             alt={suggestedTour.title}
                             fill
                             className="object-cover group-hover:scale-105 transition-transform duration-500"
+                            unoptimized
                           />
                           <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                           
@@ -1020,10 +1123,10 @@ export default function TourDetail({ tour, relatedTours, suggestedTours, package
           </DialogHeader>
           
           <div className="mt-4">
-            <iframe 
-              src="https://link.bralto.io/widget/booking/U2s8b4hu4zabQXWU2Jc6" 
-              style={{ width: '100%', border: 'none', overflow: 'hidden', minHeight: '600px' }} 
-              scrolling="no" 
+            <iframe
+              src="https://link.bralto.io/widget/booking/U2s8b4hu4zabQXWU2Jc6"
+              className="w-full border-0 overflow-hidden min-h-[600px]"
+              scrolling="no"
               id="U2s8b4hu4zabQXWU2Jc6_1769543562160"
             />
           </div>
@@ -1038,6 +1141,89 @@ export default function TourDetail({ tour, relatedTours, suggestedTours, package
         roomType={getBookingData().roomType}
         dateRange={getBookingData().dateRange}
       />
+
+      {/* Lightbox Modal */}
+      <Dialog open={lightboxOpen} onOpenChange={setLightboxOpen}>
+        <DialogPrimitive.Portal>
+          <DialogPrimitive.Overlay className="fixed inset-0 z-[100] bg-black/95 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0" />
+          <DialogPrimitive.Content className="fixed left-[50%] top-[50%] z-[100] w-full h-full max-w-none translate-x-[-50%] translate-y-[-50%] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95">
+            <div className="relative w-full h-full flex items-center justify-center p-4">
+              {/* Close Button */}
+              <button
+                onClick={() => setLightboxOpen(false)}
+                className="absolute top-4 right-4 z-[110] p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+              >
+                <X className="w-6 h-6 text-white" />
+              </button>
+
+              {/* Previous Button */}
+              {galleryImages.length > 1 && (
+                <button
+                  onClick={prevImage}
+                  className="absolute left-4 z-[110] p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                >
+                  <ChevronLeft className="w-8 h-8 text-white" />
+                </button>
+              )}
+
+              {/* Image */}
+              <div className="relative w-full h-full max-w-7xl max-h-[90vh]">
+                <Image
+                  src={galleryImages[lightboxIndex]}
+                  alt={`${tour.title} - ${lightboxIndex + 1}`}
+                  fill
+                  className="object-contain"
+                  unoptimized
+                />
+              </div>
+
+              {/* Next Button */}
+              {galleryImages.length > 1 && (
+                <button
+                  onClick={nextImage}
+                  className="absolute right-4 z-[110] p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors"
+                >
+                  <ChevronRight className="w-8 h-8 text-white" />
+                </button>
+              )}
+
+              {/* Image Counter */}
+              <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-[110] px-4 py-2 rounded-full bg-white/10 backdrop-blur-md">
+                <span className="text-white text-sm font-medium">
+                  {lightboxIndex + 1} / {galleryImages.length}
+                </span>
+              </div>
+
+              {/* Thumbnail Strip */}
+              {galleryImages.length > 1 && (
+                <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-[110] max-w-3xl w-full px-4">
+                  <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide justify-center">
+                    {galleryImages.map((img, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setLightboxIndex(index)}
+                        className={`flex-shrink-0 relative ${
+                          lightboxIndex === index ? 'ring-2 ring-tc-orange' : 'ring-1 ring-white/30 hover:ring-white/50'
+                        } rounded-lg overflow-hidden transition-all`}
+                      >
+                        <div className="w-16 h-12 relative">
+                          <Image
+                            src={img}
+                            alt={`Thumbnail ${index + 1}`}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </DialogPrimitive.Content>
+        </DialogPrimitive.Portal>
+      </Dialog>
     </>
   );
 }

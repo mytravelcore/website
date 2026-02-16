@@ -440,7 +440,7 @@ export default function AdminHome({ tours, destinations, onNavigateToTours }: Ad
                         <p className="text-sm text-slate-500">{tour.destination?.name || 'Sin destino'}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-[#3546A6]">${tour.price_usd?.toLocaleString()}</p>
+                        <p className="font-semibold text-[#3546A6]">${tour.base_price_usd?.toLocaleString()}</p>
                         <p className="text-sm text-slate-500">{tour.duration_days} días</p>
                       </div>
                     </div>

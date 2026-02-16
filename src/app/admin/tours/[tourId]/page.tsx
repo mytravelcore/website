@@ -267,11 +267,11 @@ export default function UnifiedTourEditorPage() {
       setDestinations(destResult.data || []);
       
       // General
-      setGalleryImages(tourData.gallery_image_urls || []);
+      setGalleryImages(tourData.gallery_images || []);
       setDurationDays(tourData.duration_days || 1);
       setTourType(tourData.duration_days > 1 ? 'multiday' : 'activity');
       setAgeRange([tourData.age_min || 10, tourData.age_max || 70]);
-      setSelectedDifficulty(tourData.difficulty_level || '');
+      setSelectedDifficulty(tourData.difficulty || '');
       
       if (tourData.destination_name) {
         setSelectedDestinations(tourData.destination_name.split(',').map((s: string) => s.trim()).filter(Boolean));
@@ -350,7 +350,7 @@ export default function UnifiedTourEditorPage() {
             id: crypto.randomUUID(),
             name: 'Habitación Doble',
             is_default: true,
-            adult_price: tourData.base_price_usd || tourData.price_usd || 0,
+            adult_price: tourData.base_price_usd || 0,
           };
           savedPackages = [defaultPkg];
           setPackages(savedPackages);
@@ -435,17 +435,17 @@ export default function UnifiedTourEditorPage() {
           short_description: data.short_description || null,
           long_description: data.long_description || null,
           duration_days: tourType === 'activity' ? 1 : durationDays,
-          difficulty_level: selectedDifficulty || null,
+          difficulty: selectedDifficulty || null,
           destination_name: selectedDestinations.join(', ') || null,
           activities_label: selectedActivities.join(', ') || null,
           age_min: ageRange[0],
           age_max: ageRange[1],
           tour_label: data.tour_label || null,
-          gallery_image_urls: galleryImages,
+          gallery_images: galleryImages,
           // Itinerary
           itinerary: itinerary,
           // Price
-          price_usd: mainPrice,
+          base_price_usd: mainPrice,
           starting_price_from: startingPriceFrom,
           package_type: packageType,
           primary_price_category: primaryCategory,

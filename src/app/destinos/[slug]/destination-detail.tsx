@@ -26,6 +26,7 @@ export default function DestinationDetail({ destination, tours }: DestinationDet
             fill
             className="object-cover"
             priority
+            unoptimized
           />
           {/* Gradient Overlay */}
           <div className="absolute inset-0 bg-gradient-to-t from-tc-purple-deep via-tc-purple-deep/50 to-transparent" />

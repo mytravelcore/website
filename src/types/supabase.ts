@@ -399,19 +399,27 @@ export type Database = {
       }
       tours: {
         Row: {
+          accommodation: Json | null
+          activities_label: string | null
+          addons: Json | null
           age_max: number | null
           age_min: number | null
+          age_range: string | null
           base_price_usd: number | null
           category: string | null
           created_at: string | null
           currency: string | null
           destination_id: string | null
+          destination_label: string | null
+          destination_name: string | null
           difficulty: string | null
+          difficulty_label: string | null
           duration_days: number | null
           excludes: Json | null
           faqs: Json | null
           featured: boolean | null
           gallery_images: string[] | null
+          group_size_label: string | null
           group_size_max: number | null
           group_size_min: number | null
           hero_image_url: string | null
@@ -419,27 +427,45 @@ export type Database = {
           includes: Json | null
           itinerary: Json | null
           long_description: string | null
+          map_latitude: number | null
+          map_longitude: number | null
+          map_markers: Json | null
+          map_zoom: number | null
+          package_type: string | null
+          price_packages: Json | null
+          primary_price_category: string | null
+          reviews: Json | null
           short_description: string | null
           slug: string
+          starting_price_from: number | null
           status: string | null
           subtitle: string | null
           title: string
+          tour_label: string | null
           updated_at: string | null
         }
         Insert: {
+          accommodation?: Json | null
+          activities_label?: string | null
+          addons?: Json | null
           age_max?: number | null
           age_min?: number | null
+          age_range?: string | null
           base_price_usd?: number | null
           category?: string | null
           created_at?: string | null
           currency?: string | null
           destination_id?: string | null
+          destination_label?: string | null
+          destination_name?: string | null
           difficulty?: string | null
+          difficulty_label?: string | null
           duration_days?: number | null
           excludes?: Json | null
           faqs?: Json | null
           featured?: boolean | null
           gallery_images?: string[] | null
+          group_size_label?: string | null
           group_size_max?: number | null
           group_size_min?: number | null
           hero_image_url?: string | null
@@ -447,27 +473,45 @@ export type Database = {
           includes?: Json | null
           itinerary?: Json | null
           long_description?: string | null
+          map_latitude?: number | null
+          map_longitude?: number | null
+          map_markers?: Json | null
+          map_zoom?: number | null
+          package_type?: string | null
+          price_packages?: Json | null
+          primary_price_category?: string | null
+          reviews?: Json | null
           short_description?: string | null
           slug: string
+          starting_price_from?: number | null
           status?: string | null
           subtitle?: string | null
           title: string
+          tour_label?: string | null
           updated_at?: string | null
         }
         Update: {
+          accommodation?: Json | null
+          activities_label?: string | null
+          addons?: Json | null
           age_max?: number | null
           age_min?: number | null
+          age_range?: string | null
           base_price_usd?: number | null
           category?: string | null
           created_at?: string | null
           currency?: string | null
           destination_id?: string | null
+          destination_label?: string | null
+          destination_name?: string | null
           difficulty?: string | null
+          difficulty_label?: string | null
           duration_days?: number | null
           excludes?: Json | null
           faqs?: Json | null
           featured?: boolean | null
           gallery_images?: string[] | null
+          group_size_label?: string | null
           group_size_max?: number | null
           group_size_min?: number | null
           hero_image_url?: string | null
@@ -475,11 +519,21 @@ export type Database = {
           includes?: Json | null
           itinerary?: Json | null
           long_description?: string | null
+          map_latitude?: number | null
+          map_longitude?: number | null
+          map_markers?: Json | null
+          map_zoom?: number | null
+          package_type?: string | null
+          price_packages?: Json | null
+          primary_price_category?: string | null
+          reviews?: Json | null
           short_description?: string | null
           slug?: string
+          starting_price_from?: number | null
           status?: string | null
           subtitle?: string | null
           title?: string
+          tour_label?: string | null
           updated_at?: string | null
         }
         Relationships: [

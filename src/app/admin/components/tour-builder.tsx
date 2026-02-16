@@ -167,7 +167,7 @@ export default function TourBuilder({ tour, destinations, onClose, onSuccess }: 
         slug: tour.slug,
         short_description: tour.short_description || '',
         long_description: tour.long_description || '',
-        price_usd: tour.price_usd || 0,
+        price_usd: tour.base_price_usd || 0,
         duration_days: tour.duration_days || 1,
         difficulty: tour.difficulty || '',
         destination_id: tour.destination_id || '',
@@ -184,7 +184,7 @@ export default function TourBuilder({ tour, destinations, onClose, onSuccess }: 
       setItinerary(tour.itinerary || []);
       setIncludes(tour.includes || []);
       setExcludes(tour.excludes || []);
-      setGalleryImages(tour.gallery_image_urls || []);
+      setGalleryImages(tour.gallery_images || []);
     }
   }, [tour, reset]);
 
@@ -198,7 +198,7 @@ export default function TourBuilder({ tour, destinations, onClose, onSuccess }: 
         slug: data.slug,
         short_description: data.short_description,
         long_description: data.long_description,
-        price_usd: data.price_usd,
+        base_price_usd: data.price_usd,
         duration_days: data.duration_days,
         difficulty: data.difficulty,
         destination_id: data.destination_id,
@@ -214,7 +214,7 @@ export default function TourBuilder({ tour, destinations, onClose, onSuccess }: 
         itinerary,
         includes,
         excludes,
-        gallery_image_urls: galleryImages,
+        gallery_images: galleryImages,
       };
 
       if (tour) {
