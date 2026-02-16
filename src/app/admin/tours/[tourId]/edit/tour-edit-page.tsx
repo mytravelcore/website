@@ -166,7 +166,7 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
   const [galleryImages, setGalleryImages] = useState<string[]>(initialTour.gallery_images || []);
   const [durationDays, setDurationDays] = useState(initialTour.duration_days || 1);
   const [priceUsd, setPriceUsd] = useState(initialTour.base_price_usd || 0);
-  const [difficultyLevel, setDifficultyLevel] = useState(initialTour.difficulty || '');
+  const [difficultyLevel, setDifficultyLevel] = useState<Tour['difficulty']>(initialTour.difficulty || null);
   const [destinationId, setDestinationId] = useState(initialTour.destination_id || '');
   const [featured, setFeatured] = useState(initialTour.featured || false);
   const [status, setStatus] = useState(initialTour.status || 'draft');
@@ -219,6 +219,8 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
   // Includes
   const [includes, setIncludes] = useState<string[]>(initialTour.includes || []);
   const [excludes, setExcludes] = useState<string[]>(initialTour.excludes || []);
+  const [newInclude, setNewInclude] = useState('');
+  const [newExclude, setNewExclude] = useState('');
   const [showBulkIncludes, setShowBulkIncludes] = useState(false);
   const [bulkIncludesText, setBulkIncludesText] = useState('');
   const [showBulkExcludes, setShowBulkExcludes] = useState(false);
@@ -742,6 +744,34 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
      setShowBulkIncludes(false);
    };
 
+   const handleBulkExcludesImport = () => {
+     if (!bulkExcludesText.trim()) {
+       alert('Por favor ingresa los items del no incluye');
+       return;
+     }
+
+     const lines = bulkExcludesText.split('\n');
+     const newExcludeItems: string[] = [];
+
+     for (const line of lines) {
+       const trimmed = line.trim();
+       if (trimmed.length === 0) continue;
+       const text = trimmed.replace(/^[✓✗\s\-•*]+/, '').trim();
+       if (text.length > 0) {
+         newExcludeItems.push(text);
+       }
+     }
+
+     if (newExcludeItems.length === 0) {
+       alert('No se detectaron items válidos.');
+       return;
+     }
+
+     setExcludes([...excludes, ...newExcludeItems]);
+     setBulkExcludesText('');
+     setShowBulkExcludes(false);
+   };
+
   const addFaq = () => {
     setFaqs([...faqs, { question: '', answer: '' }]);
   };
@@ -989,8 +1019,8 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                   <div>
                     <Label className="text-slate-700">Nivel de Dificultad</Label>
                     <select
-                      value={difficultyLevel}
-                      onChange={(e) => setDifficultyLevel(e.target.value)}
+                      value={difficultyLevel || ''}
+                      onChange={(e) => setDifficultyLevel((e.target.value || null) as Tour['difficulty'])}
                       className="mt-2 w-full h-12 px-3 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#3546A6]"
                     >
                       <option value="">Seleccionar...</option>
