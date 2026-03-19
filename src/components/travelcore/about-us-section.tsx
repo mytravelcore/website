@@ -19,6 +19,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import Footer from "@/components/footer";
+import CopasturBanner from "@/components/travelcore/copastur-banner";
 
 // Leadership team members (bigger display)
 const leadershipTeam = [
@@ -866,6 +867,9 @@ export default function AboutUsSection() {
           </div>
         </div>
       </section>
+
+      {/* Copastur Alliance Section */}
+      <CopasturBanner variant="quienes-somos" />
 
       {/* CTA Section */}
       <section className="py-24 relative">

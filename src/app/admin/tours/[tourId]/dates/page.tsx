@@ -552,49 +552,6 @@ export default function DatesPage() {
                         />
                       </div>
 
-                      {/* Repeat Date Section */}
-                      <div className="border border-slate-200 rounded-lg p-4 space-y-4">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-sm font-medium text-slate-700">Repeat Date</Label>
-                          <Switch
-                            checked={date.repeat_enabled}
-                            onCheckedChange={(checked) => updateDate(date.id, 'repeat_enabled', checked)}
-                          />
-                        </div>
-
-                        {date.repeat_enabled && (
-                          <>
-                            <div>
-                              <Label className="text-sm font-medium text-slate-700 mb-3 block">Pattern</Label>
-                              <div className="space-y-2">
-                                {repeatPatterns.map((pattern) => (
-                                  <label key={pattern.value} className="flex items-center cursor-pointer">
-                                    <input
-                                      type="radio"
-                                      name={`repeat-pattern-${date.id}`}
-                                      value={pattern.value}
-                                      checked={date.repeat_pattern === pattern.value}
-                                      onChange={() => updateDate(date.id, 'repeat_pattern', pattern.value)}
-                                      className="mr-3 w-4 h-4 border-slate-300 text-[#3546A6]"
-                                    />
-                                    <span className="text-sm text-slate-700">{pattern.label}</span>
-                                  </label>
-                                ))}
-                              </div>
-                            </div>
-
-                            <div>
-                              <Label className="text-sm font-medium text-slate-700">Repeat Until</Label>
-                              <Input
-                                type="date"
-                                value={date.repeat_until || ''}
-                                onChange={(e) => updateDate(date.id, 'repeat_until', e.target.value || null)}
-                                className="mt-2"
-                              />
-                            </div>
-                          </>
-                        )}
-                      </div>
 
                       {/* Número de Pax */}
                       <div>

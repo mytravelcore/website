@@ -1749,46 +1749,6 @@ export default function UnifiedTourEditorPage() {
                             </div>
                           </div>
 
-                          <div className="border rounded-lg p-4 space-y-4">
-                            <div className="flex items-center justify-between">
-                              <Label>Repetir fecha</Label>
-                              <Switch
-                                checked={date.repeat_enabled}
-                                onCheckedChange={(checked) => updateDate(date.id, 'repeat_enabled', checked)}
-                              />
-                            </div>
-
-                            {date.repeat_enabled && (
-                              <>
-                                <div>
-                                  <Label>Patrón de repetición</Label>
-                                  <div className="flex flex-wrap gap-2 mt-2">
-                                    {repeatPatterns.map((pattern) => (
-                                      <Button
-                                        key={pattern.value}
-                                        type="button"
-                                        variant={date.repeat_pattern === pattern.value ? 'default' : 'outline'}
-                                        size="sm"
-                                        onClick={() => updateDate(date.id, 'repeat_pattern', pattern.value)}
-                                      >
-                                        {pattern.label}
-                                      </Button>
-                                    ))}
-                                  </div>
-                                </div>
-
-                                <div>
-                                  <Label>Repetir hasta</Label>
-                                  <Input
-                                    type="date"
-                                    value={date.repeat_until || ''}
-                                    onChange={(e) => updateDate(date.id, 'repeat_until', e.target.value || null)}
-                                    className="mt-1.5"
-                                  />
-                                </div>
-                              </>
-                            )}
-                          </div>
                         </TabsContent>
 
                         <TabsContent value="packages" className="mt-4">

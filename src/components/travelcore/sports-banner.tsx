@@ -1,14 +1,14 @@
 "use client";
 
 import { motion } from 'framer-motion';
-import { Trophy, Music2, Globe2 } from 'lucide-react';
+import { Trophy, Music2, Globe2, Briefcase } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function ThreeCardsBanner() {
   return (
     <section className="py-16 bg-white">
       <div className="max-w-7xl mx-auto px-8 xl:px-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {/* Deportes Card */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -36,7 +36,7 @@ export default function ThreeCardsBanner() {
                 className="bg-white text-tc-purple-deep hover:bg-white/90 w-fit"
               >
                 <a 
-                  href="https://xportstravel.com/es/agency/XperienceMyTravelCore/"
+                  href="https://xportstravel.com/es/tour-operator/MyTravelCoreCostaRica"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -73,7 +73,7 @@ export default function ThreeCardsBanner() {
                 className="bg-white text-tc-purple-deep hover:bg-white/90 w-fit"
               >
                 <a 
-                  href="https://travelinconcert.com/es/agency/XperienceMyTravelCore/"
+                  href="https://travelinconcert.com/es/tour-operator/MyTravelCoreCostaRica/"
                   target="_blank"
                   rel="noopener noreferrer"
                 >
@@ -111,6 +111,43 @@ export default function ThreeCardsBanner() {
               >
                 <a 
                   href="https://www.specialtours.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Ver Más
+                </a>
+              </Button>
+            </div>
+          </motion.div>
+
+          {/* Feria Canton Card */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="relative rounded-2xl overflow-hidden shadow-xl group cursor-pointer"
+          >
+            <div className="absolute inset-0">
+              <img
+                src="https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&q=80"
+                alt="Feria de negocios Canton"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+              />
+              <div className="absolute inset-0 bg-gradient-to-b from-tc-purple-deep/70 to-tc-purple/90" />
+            </div>
+            <div className="relative z-10 p-8 h-[400px] flex flex-col justify-end text-white">
+              <Briefcase className="w-10 h-10 mb-4 text-tc-accent-orange" />
+              <h3 className="font-display text-3xl font-bold mb-3">Feria de negocios Canton</h3>
+              <p className="text-white/90 mb-6 leading-relaxed">
+                Importa desde China con la asesoría de expertos.
+              </p>
+              <Button
+                asChild
+                className="bg-white text-tc-purple-deep hover:bg-white/90 w-fit"
+              >
+                <a
+                  href="https://feriadecanton.com.co/"
                   target="_blank"
                   rel="noopener noreferrer"
                 >

@@ -10,6 +10,7 @@ import Testimonials from "@/components/travelcore/testimonials";
 import FAQSection from "@/components/travelcore/faq-section";
 import CTASection from "@/components/travelcore/cta-section";
 import ThreeCardsBanner from "@/components/travelcore/sports-banner";
+import CopasturBanner from "@/components/travelcore/copastur-banner";
 import { createClient } from "@/supabase/server";
 
 export default async function VacacionalPage() {
@@ -60,6 +61,7 @@ export default async function VacacionalPage() {
       <DestinationsShowcase destinations={destinationsWithCounts} />
       <ThreeCardsBanner />
       <Testimonials testimonials={testimonials || []} />
+      <CopasturBanner variant="vacacional" />
       <FAQSection />
       <CTASection />
       <Footer />

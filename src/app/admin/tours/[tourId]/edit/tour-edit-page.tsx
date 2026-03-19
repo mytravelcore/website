@@ -509,6 +509,16 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
   const [longDescription, setLongDescription] = useState(initialTour.long_description || '');
   const [heroImageUrl, setHeroImageUrl] = useState(initialTour.hero_image_url || '');
   const [galleryImages, setGalleryImages] = useState<string[]>(initialTour.gallery_images || []);
+  
+  // Debug: Log image values
+  useEffect(() => {
+    console.log('=== Image Debug ===');
+    console.log('Hero Image URL:', initialTour.hero_image_url);
+    console.log('Gallery Images:', initialTour.gallery_images);
+    console.log('State Hero:', heroImageUrl);
+    console.log('State Gallery:', galleryImages);
+  }, []);
+  
   const [durationDays, setDurationDays] = useState(initialTour.duration_days || 1);
   const [priceUsd, setPriceUsd] = useState(initialTour.base_price_usd || 0);
   const [difficultyLevel, setDifficultyLevel] = useState<Tour['difficulty']>(initialTour.difficulty || null);
@@ -1431,10 +1441,11 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                         src={heroImageUrl}
                         alt="Hero preview"
                         className="w-full h-full object-cover"
-                        referrerPolicy="no-referrer"
+                        crossOrigin="anonymous"
                         onError={(e) => {
                           const target = e.target as HTMLImageElement;
-                          target.src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"><rect fill="%23f1f5f9" width="400" height="200"/><text x="200" y="100" text-anchor="middle" dy=".3em" fill="%2394a3b8" font-size="14">No se pudo cargar la imagen</text></svg>';
+                          console.error('Error loading hero image:', heroImageUrl);
+                          target.src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200"%3E%3Crect fill="%23f1f5f9" width="400" height="200"/%3E%3Ctext x="200" y="100" text-anchor="middle" dy=".3em" fill="%2394a3b8" font-size="14"%3ENo se pudo cargar la imagen%3C/text%3E%3C/svg%3E';
                         }}
                       />
                       <button
@@ -1472,9 +1483,10 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                             src={url} 
                             alt={`Gallery ${index + 1}`} 
                             className="w-full h-full object-cover rounded-lg"
-                            referrerPolicy="no-referrer"
+                            crossOrigin="anonymous"
                             onError={(e) => {
-                              (e.target as HTMLImageElement).src = 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect fill="%23f1f5f9" width="100" height="100"/><text x="50" y="50" text-anchor="middle" dy=".3em" fill="%2394a3b8" font-size="10">Error</text></svg>';
+                              console.error('Error loading gallery image:', url);
+                              (e.target as HTMLImageElement).src = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"%3E%3Crect fill="%23f1f5f9" width="100" height="100"/%3E%3Ctext x="50" y="50" text-anchor="middle" dy=".3em" fill="%2394a3b8" font-size="10"%3EError%3C/text%3E%3C/svg%3E';
                             }}
                           />
                           <button
@@ -2366,50 +2378,6 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                                 onChange={(e) => updateDate(date.id, 'starting_date', e.target.value)}
                                 className="mt-2"
                               />
-                            </div>
-
-                            {/* Repeat Date Section */}
-                            <div className="border border-slate-200 rounded-lg p-4 space-y-4">
-                              <div className="flex items-center justify-between">
-                                <Label className="text-sm font-medium text-slate-700">Repetir Fecha</Label>
-                                <Switch
-                                  checked={date.repeat_enabled}
-                                  onCheckedChange={(checked) => updateDate(date.id, 'repeat_enabled', checked)}
-                                />
-                              </div>
-
-                              {date.repeat_enabled && (
-                                <>
-                                  <div>
-                                    <Label className="text-sm font-medium text-slate-700 mb-3 block">Patrón</Label>
-                                    <div className="space-y-2">
-                                      {repeatPatterns.map((pattern) => (
-                                        <label key={pattern.value} className="flex items-center cursor-pointer">
-                                          <input
-                                            type="radio"
-                                            name={`repeat-pattern-${date.id}`}
-                                            value={pattern.value}
-                                            checked={date.repeat_pattern === pattern.value}
-                                            onChange={() => updateDate(date.id, 'repeat_pattern', pattern.value)}
-                                            className="mr-3 w-4 h-4 border-slate-300 text-[#3546A6]"
-                                          />
-                                          <span className="text-sm text-slate-700">{pattern.label}</span>
-                                        </label>
-                                      ))}
-                                    </div>
-                                  </div>
-
-                                  <div>
-                                    <Label className="text-sm font-medium text-slate-700">Repetir Hasta</Label>
-                                    <Input
-                                      type="date"
-                                      value={date.repeat_until || ''}
-                                      onChange={(e) => updateDate(date.id, 'repeat_until', e.target.value || null)}
-                                      className="mt-2"
-                                    />
-                                  </div>
-                                </>
-                              )}
                             </div>
 
                             {/* Número de Pax */}

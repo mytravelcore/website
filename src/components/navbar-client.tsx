@@ -25,7 +25,9 @@ export default function NavbarClient({ user, userProfile }: NavbarClientProps) {
     pathname.startsWith('/tours') || 
     pathname.startsWith('/destinos') ||
     pathname.startsWith('/contacto') ||
-    pathname.startsWith('/quienes-somos');
+    pathname.startsWith('/quienes-somos') ||
+    pathname.startsWith('/copastur-vacacional') ||
+    pathname.startsWith('/copastur-corporativo');
 
   // Determine the home link based on context
   const homeLink = isInVacacional ? '/vacacional' : '/';

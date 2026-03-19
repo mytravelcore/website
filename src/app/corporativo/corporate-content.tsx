@@ -15,6 +15,7 @@ import {
   MessageCircle,
   Play,
 } from "lucide-react";
+import CopasturBanner from "@/components/travelcore/copastur-banner";
 
 const features = [
   {
@@ -428,6 +429,7 @@ export default function CorporateContent() {
         </div>
       </section>
       {/* Contact Form Section - Dark theme */}
+      <CopasturBanner variant="corporativo" />
       <section id="contact-form" className="py-24 bg-[#08080c] relative">
         {/* Subtle top border glow */}
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
