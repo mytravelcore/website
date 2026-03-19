@@ -130,7 +130,7 @@ export default function ThreeCardsBanner() {
           >
             <div className="absolute inset-0">
               <img
-                src="https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?w=800&q=80"
+                src="https://assets.cdn.filesafe.space/PfHZoaIxRooTMHzcnant/media/69bbb214d319c24d82cd2ec5.jpg"
                 alt="Feria de negocios Canton"
                 className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
               />
