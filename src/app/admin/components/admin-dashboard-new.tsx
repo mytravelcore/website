@@ -22,6 +22,7 @@ import {
   LogOut,
   Settings,
   Loader2,
+  Copy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -97,6 +98,7 @@ export default function AdminDashboard({
   const [deleteTarget, setDeleteTarget] = useState<{ type: string; item: any } | null>(null);
   const [bulkDeleteOpen, setBulkDeleteOpen] = useState(false);
   const [bulkDeleteType, setBulkDeleteType] = useState<string>("");
+  const [duplicatingTourId, setDuplicatingTourId] = useState<string | null>(null);
   
   // Create modals
   const [createDestinationOpen, setCreateDestinationOpen] = useState(false);
@@ -243,6 +245,52 @@ export default function AdminDashboard({
     } catch (error) {
       console.error("Error:", error);
       toast({ title: "Error al eliminar el tour", variant: "destructive" });
+    }
+  };
+
+  const handleDuplicateTour = async (tour: Tour) => {
+    setDuplicatingTourId(tour.id);
+    try {
+      const baseSlug = `${tour.slug}-copia`;
+      // Make slug unique by appending timestamp if needed
+      const { data: existing } = await supabase
+        .from("tours")
+        .select("id")
+        .eq("slug", baseSlug)
+        .maybeSingle();
+      const slug = existing ? `${baseSlug}-${Date.now()}` : baseSlug;
+
+      const { data: newTour, error } = await supabase
+        .from("tours")
+        .insert({
+          title: `Copia de ${tour.title}`,
+          slug,
+          subtitle: tour.subtitle,
+          status: "draft",
+          destination_id: tour.destination_id,
+          duration_days: tour.duration_days,
+          difficulty_level: (tour as any).difficulty_level,
+          base_price_usd: tour.base_price_usd,
+          hero_image_url: tour.hero_image_url,
+          gallery_images: tour.gallery_images,
+          itinerary: tour.itinerary,
+          includes: tour.includes,
+          excludes: tour.excludes,
+          faqs: tour.faqs,
+          featured: false,
+        })
+        .select()
+        .single();
+
+      if (error || !newTour) throw error;
+
+      toast({ title: "Tour duplicado", description: "Redirigiendo al editor..." });
+      router.push(`/admin/tours/${newTour.id}/edit`);
+    } catch (error) {
+      console.error("Error duplicating tour:", error);
+      toast({ title: "Error al duplicar el tour", variant: "destructive" });
+    } finally {
+      setDuplicatingTourId(null);
     }
   };
 
@@ -819,19 +867,34 @@ export default function AdminDashboard({
                           <td className="px-4 py-4">
                             <div className="flex items-center justify-end gap-1">
                               <Link href={`/tours/${tour.slug}`} target="_blank">
-                                <Button variant="ghost" size="sm" className="text-slate-600">
+                                <Button variant="ghost" size="sm" className="text-slate-600" title="Ver en sitio">
                                   <Eye className="w-4 h-4" />
                                 </Button>
                               </Link>
                               <Link href={`/admin/tours/${tour.id}/edit`}>
-                                <Button variant="ghost" size="sm" className="text-slate-600">
+                                <Button variant="ghost" size="sm" className="text-slate-600" title="Editar">
                                   <Edit className="w-4 h-4" />
                                 </Button>
                               </Link>
                               <Button
                                 variant="ghost"
                                 size="sm"
+                                className="text-slate-600 hover:text-[#3546A6] hover:bg-[#3546A6]/5"
+                                title="Duplicar"
+                                disabled={duplicatingTourId === tour.id}
+                                onClick={() => handleDuplicateTour(tour)}
+                              >
+                                {duplicatingTourId === tour.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Copy className="w-4 h-4" />
+                                )}
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
                                 className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                title="Eliminar"
                                 onClick={() => setDeleteTarget({ type: "tour", item: tour })}
                               >
                                 <Trash2 className="w-4 h-4" />
