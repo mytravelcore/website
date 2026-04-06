@@ -141,6 +141,20 @@ export default function PortalPage() {
         />
       </div>
 
+      {/* Background video overlay */}
+      <video
+        autoPlay
+        muted
+        loop
+        playsInline
+        className="absolute inset-0 w-full h-full object-cover opacity-[0.18] pointer-events-none"
+      >
+        <source
+          src="https://storage.googleapis.com/msgsndr/PfHZoaIxRooTMHzcnant/media/6968607125c12a6ad2196b3e.mp4"
+          type="video/mp4"
+        />
+      </video>
+
       {/* Subtle floating particles */}
       <FloatingParticles />
 
