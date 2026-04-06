@@ -741,6 +741,46 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
     return null;
   };
 
+  // Synonym table for room-type recognition
+  const ROOM_SYNONYMS: Record<string, string[]> = {
+    'Habitación Doble':      ['doble', 'double', 'dbl', 'twin', 'hab doble', 'habitacion doble'],
+    'Habitación Triple':     ['triple', 'trpl', 'trp', 'hab triple', 'habitacion triple'],
+    'Habitación Individual': ['individual', 'sencillo', 'single', 'sgl', 'simple', 'solo', 'hab individual'],
+    'Habitación Cuádruple':  ['cuadruple', 'cuadruple', 'quad', 'cuadrupl'],
+  };
+
+  const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+
+  // Returns existing package ID, or suggested canonical name for "new:NAME", or null
+  const autoMatchHeader = (header: string): string | null => {
+    const nh = norm(header);
+    // 1. Direct substring match against existing package names
+    const direct = packages.find(pkg => {
+      const np = norm(pkg.name);
+      return np.includes(nh) || nh.includes(np);
+    });
+    if (direct) return direct.id;
+    // 2. Synonym match against existing package names
+    for (const pkg of packages) {
+      const np = norm(pkg.name);
+      for (const [canonical, syns] of Object.entries(ROOM_SYNONYMS)) {
+        if (syns.some(s => norm(canonical) === np || np.includes(norm(canonical)))) {
+          if (syns.some(s => nh === s || nh.includes(s) || s.includes(nh))) {
+            return pkg.id;
+          }
+        }
+      }
+    }
+    // 3. Suggest a canonical room name for auto-creation
+    for (const [canonical, syns] of Object.entries(ROOM_SYNONYMS)) {
+      if (syns.some(s => nh === s || nh.includes(s) || s.includes(nh))) {
+        return `new:${canonical}`;
+      }
+    }
+    // 4. No match – suggest creating with the original header name
+    return `new:${header}`;
+  };
+
   const parseBulkDates = () => {
     setBulkDatesError(null);
     const lines = bulkDatesText.trim().split('\n').filter(l => l.trim());
@@ -769,49 +809,114 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
     if (!rows.length) { setBulkDatesError('No se encontraron fechas válidas. Usa formato M/D/AAAA'); return; }
     setBulkDatesHeaders(headers);
     setBulkDatesPreview(rows);
-    // Auto-match columns to packages by name
-    const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     const auto: Record<number, string> = {};
     headers.forEach((h, i) => {
-      const match = packages.find(pkg => {
-        const np = norm(pkg.name); const nh = norm(h);
-        return np.includes(nh) || nh.includes(np);
-      });
-      if (match) auto[i] = match.id;
+      const match = autoMatchHeader(h);
+      if (match) auto[i] = match;
     });
     setBulkDatesMapping(auto);
   };
 
-  const applyBulkDates = () => {
+  const applyBulkDates = async () => {
     if (!bulkDatesPreview) return;
-    const newDates: LocalTourDate[] = bulkDatesPreview.map(row => {
-      const id = crypto.randomUUID();
-      return {
-        id,
-        starting_date: row.date,
-        cutoff_days: 7,
-        max_pax: null,
-        repeat_enabled: false,
-        repeat_pattern: null,
-        repeat_until: null,
-        has_price_override: false,
-        price_override_config: null,
-        isNew: true,
-        package_overrides: packages.map(pkg => {
-          const entry = Object.entries(bulkDatesMapping).find(([, pkgId]) => pkgId === pkg.id);
-          const price = entry !== undefined ? row.prices[Number(entry[0])] : null;
-          return {
-            package_id: pkg.id,
-            enabled: true,
-            price_override: price && price > 0 ? price : null,
-            max_pax_override: null,
-            notes: '',
-            blocked_dates: [],
-          };
-        }),
-      };
+
+    // Collect columns that need new packages created
+    const toCreate: { colIdx: number; name: string }[] = [];
+    Object.entries(bulkDatesMapping).forEach(([idx, val]) => {
+      if (val.startsWith('new:')) {
+        const name = val.slice(4);
+        if (!toCreate.find(c => c.name === name)) {
+          toCreate.push({ colIdx: Number(idx), name });
+        }
+      }
     });
-    setDates(prev => [...prev, ...newDates]);
+
+    // Create new packages in state + DB
+    let updatedPackages = [...packages];
+    if (toCreate.length > 0) {
+      const newPkgs: LocalPricePackage[] = toCreate.map(({ name }) => ({
+        ...defaultPackage,
+        id: crypto.randomUUID(),
+        name,
+        isDefault: false,
+        adultPrice: 0,
+      }));
+      updatedPackages = [...packages, ...newPkgs];
+      setPackages(updatedPackages);
+      // Persist new packages to DB immediately
+      await supabase
+        .from('tours')
+        .update({ price_packages: updatedPackages })
+        .eq('id', initialTour.id);
+      // Update mapping: replace "new:NAME" with the new pkg id
+      const updatedMapping = { ...bulkDatesMapping };
+      toCreate.forEach(({ name }) => {
+        const newPkg = newPkgs.find(p => p.name === name)!;
+        Object.entries(updatedMapping).forEach(([idx, val]) => {
+          if (val === `new:${name}`) updatedMapping[Number(idx)] = newPkg.id;
+        });
+      });
+      setBulkDatesMapping(updatedMapping);
+      // Build dates with resolved mapping
+      const newDates: LocalTourDate[] = bulkDatesPreview.map(row => {
+        const id = crypto.randomUUID();
+        return {
+          id,
+          starting_date: row.date,
+          cutoff_days: 7,
+          max_pax: null,
+          repeat_enabled: false,
+          repeat_pattern: null,
+          repeat_until: null,
+          has_price_override: false,
+          price_override_config: null,
+          isNew: true,
+          package_overrides: updatedPackages.map(pkg => {
+            const entry = Object.entries(updatedMapping).find(([, pkgId]) => pkgId === pkg.id);
+            const price = entry !== undefined ? row.prices[Number(entry[0])] : null;
+            return {
+              package_id: pkg.id,
+              enabled: true,
+              price_override: price && price > 0 ? price : null,
+              max_pax_override: null,
+              notes: '',
+              blocked_dates: [],
+            };
+          }),
+        };
+      });
+      setDates(prev => [...prev, ...newDates]);
+    } else {
+      const newDates: LocalTourDate[] = bulkDatesPreview.map(row => {
+        const id = crypto.randomUUID();
+        return {
+          id,
+          starting_date: row.date,
+          cutoff_days: 7,
+          max_pax: null,
+          repeat_enabled: false,
+          repeat_pattern: null,
+          repeat_until: null,
+          has_price_override: false,
+          price_override_config: null,
+          isNew: true,
+          package_overrides: updatedPackages.map(pkg => {
+            const entry = Object.entries(bulkDatesMapping).find(([, pkgId]) => pkgId === pkg.id);
+            const price = entry !== undefined ? row.prices[Number(entry[0])] : null;
+            return {
+              package_id: pkg.id,
+              enabled: true,
+              price_override: price && price > 0 ? price : null,
+              max_pax_override: null,
+              notes: '',
+              blocked_dates: [],
+            };
+          }),
+        };
+      });
+      setDates(prev => [...prev, ...newDates]);
+    }
+
     setBulkDatesPreview(null);
     setBulkDatesText('');
     setShowBulkDates(false);
@@ -2465,29 +2570,58 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                           </table>
                         </div>
                         {/* Column mapping */}
-                        {packages.length > 0 && bulkDatesHeaders.length > 0 && (
+                        {bulkDatesHeaders.length > 0 && (
                           <div className="space-y-2">
-                            <p className="text-sm font-medium text-slate-700">Asignar columnas a paquetes</p>
-                            {bulkDatesHeaders.map((header, idx) => (
-                              <div key={idx} className="flex items-center gap-3">
-                                <span className="text-sm text-slate-600 w-28 truncate font-medium">{header}</span>
-                                <span className="text-slate-300">→</span>
-                                <Select
-                                  value={bulkDatesMapping[idx] || 'unassigned'}
-                                  onValueChange={(val) => setBulkDatesMapping(prev => ({ ...prev, [idx]: val === 'unassigned' ? '' : val }))}
-                                >
-                                  <SelectTrigger className="flex-1 h-8 text-sm"><SelectValue placeholder="Sin asignar" /></SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="unassigned">Sin asignar</SelectItem>
-                                    {packages.map(pkg => <SelectItem key={pkg.id} value={pkg.id}>{pkg.name}</SelectItem>)}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            ))}
+                            <p className="text-sm font-medium text-slate-700">Asignar columnas a tipos de habitación / paquetes</p>
+                            <p className="text-xs text-slate-400">Los paquetes marcados con ✦ se crearán automáticamente al importar.</p>
+                            {bulkDatesHeaders.map((header, idx) => {
+                              const val = bulkDatesMapping[idx] || 'unassigned';
+                              const isNew = val.startsWith('new:');
+                              const newName = isNew ? val.slice(4) : '';
+                              return (
+                                <div key={idx} className="flex items-center gap-3">
+                                  <span className="text-sm text-slate-600 w-28 truncate font-medium">{header}</span>
+                                  <span className="text-slate-300">→</span>
+                                  <Select
+                                    value={val}
+                                    onValueChange={(v) => setBulkDatesMapping(prev => ({ ...prev, [idx]: v === 'unassigned' ? '' : v }))}
+                                  >
+                                    <SelectTrigger className={`flex-1 h-8 text-sm ${isNew ? 'border-[#9996DB] text-[#3546A6]' : ''}`}>
+                                      <SelectValue placeholder="Sin asignar" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      <SelectItem value="unassigned">Sin asignar</SelectItem>
+                                      {packages.length > 0 && (
+                                        <>
+                                          <div className="px-2 py-1 text-xs text-slate-400 font-medium">Paquetes existentes</div>
+                                          {packages.map(pkg => (
+                                            <SelectItem key={pkg.id} value={pkg.id}>{pkg.name}</SelectItem>
+                                          ))}
+                                        </>
+                                      )}
+                                      <div className="px-2 py-1 text-xs text-slate-400 font-medium border-t mt-1 pt-2">Crear nuevo</div>
+                                      {/* Suggest canonical room types not yet covered */}
+                                      {Object.keys(ROOM_SYNONYMS)
+                                        .filter(n => !packages.some(p => norm(p.name).includes(norm(n)) || norm(n).includes(norm(p.name))))
+                                        .map(name => (
+                                          <SelectItem key={`new:${name}`} value={`new:${name}`}>✦ Crear "{name}"</SelectItem>
+                                        ))}
+                                      {/* Always allow creating with exact header name */}
+                                      {!Object.keys(ROOM_SYNONYMS).some(n => norm(n) === norm(header)) && (
+                                        <SelectItem value={`new:${header}`}>✦ Crear "{header}"</SelectItem>
+                                      )}
+                                    </SelectContent>
+                                  </Select>
+                                  {isNew && (
+                                    <span className="text-xs text-[#9996DB] whitespace-nowrap">nuevo paquete</span>
+                                  )}
+                                </div>
+                              );
+                            })}
                           </div>
                         )}
                         <div className="flex gap-2">
-                          <Button size="sm" onClick={applyBulkDates} className="bg-gradient-to-r from-[#3546A6] to-[#9996DB] text-white hover:opacity-90">
+                          <Button size="sm" onClick={() => applyBulkDates()} className="bg-gradient-to-r from-[#3546A6] to-[#9996DB] text-white hover:opacity-90">
                             <Plus className="w-4 h-4 mr-2" />Importar {bulkDatesPreview.length} fechas
                           </Button>
                           <Button size="sm" variant="outline" onClick={() => setBulkDatesPreview(null)}>Volver</Button>
