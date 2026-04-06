@@ -147,7 +147,7 @@ export default function PortalPage() {
         muted
         loop
         playsInline
-        className="absolute inset-0 w-full h-full object-cover opacity-[0.18] pointer-events-none"
+        className="absolute inset-0 w-full h-full object-cover pointer-events-none"
       >
         <source
           src="https://storage.googleapis.com/msgsndr/PfHZoaIxRooTMHzcnant/media/6968607125c12a6ad2196b3e.mp4"
