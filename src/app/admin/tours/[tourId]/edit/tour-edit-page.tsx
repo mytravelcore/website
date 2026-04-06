@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -40,9 +40,10 @@ import {
 } from "@/components/ui/alert-dialog";
 import { createClient } from '@/supabase/client';
 import { 
-  Save, Loader2, X, FileText, Image as ImageIcon, DollarSign, 
+  Save, Loader2, X, FileText, Image as ImageIcon, DollarSign,
   Calendar, Map, List, Plus, Trash2, ChevronDown, ChevronUp,
-  Clock, Users, Repeat, Check, HelpCircle, Wand2, Upload
+  Clock, Users, Repeat, Check, HelpCircle, Wand2, Upload,
+  Clipboard, AlertCircle, Pencil
 } from 'lucide-react';
 import ImageUpload from '@/components/admin/image-upload';
 import { cn } from '@/lib/utils';
@@ -568,6 +569,18 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
   const [activeDateTab, setActiveDateTab] = useState<Record<string, string>>({});
   const [deletingDate, setDeletingDate] = useState<LocalTourDate | null>(null);
   const [datesLoading, setDatesLoading] = useState(true);
+  // Bulk paste dates
+  const [showBulkDates, setShowBulkDates] = useState(false);
+  const [bulkDatesText, setBulkDatesText] = useState('');
+  const [bulkDatesPreview, setBulkDatesPreview] = useState<{ date: string; prices: number[] }[] | null>(null);
+  const [bulkDatesHeaders, setBulkDatesHeaders] = useState<string[]>([]);
+  const [bulkDatesMapping, setBulkDatesMapping] = useState<Record<number, string>>({});
+  const [bulkDatesError, setBulkDatesError] = useState<string | null>(null);
+  // Inline editing for includes/excludes
+  const [editingInclude, setEditingInclude] = useState<number | null>(null);
+  const [editingExclude, setEditingExclude] = useState<number | null>(null);
+  const [editingIncludeValue, setEditingIncludeValue] = useState('');
+  const [editingExcludeValue, setEditingExcludeValue] = useState('');
   
   // Itinerary
   const [itineraryDays, setItineraryDays] = useState<any[]>(initialTour.itinerary || []);
@@ -713,6 +726,106 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
     setDates([...dates, newDate]);
     setExpandedDates([...expandedDates, newId]);
     setActiveDateTab({ ...activeDateTab, [newId]: 'general' });
+  };
+
+  // Bulk paste dates helpers
+  const parseExcelDate = (s: string): string | null => {
+    const parts = s.trim().split('/');
+    if (parts.length === 3) {
+      const [m, d, y] = parts;
+      if (!isNaN(Number(m)) && !isNaN(Number(d)) && !isNaN(Number(y))) {
+        const fy = y.length === 2 ? '20' + y : y;
+        return `${fy}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+      }
+    }
+    return null;
+  };
+
+  const parseBulkDates = () => {
+    setBulkDatesError(null);
+    const lines = bulkDatesText.trim().split('\n').filter(l => l.trim());
+    if (!lines.length) { setBulkDatesError('No hay datos para procesar'); return; }
+    const firstCells = lines[0].split('\t').map(c => c.trim());
+    const isHeader = !parseExcelDate(firstCells[0]);
+    const dataLines = isHeader ? lines.slice(1) : lines;
+    const headers: string[] = [];
+    if (isHeader) {
+      for (let i = 2; i < firstCells.length; i++) { if (firstCells[i]) headers.push(firstCells[i]); }
+    } else {
+      for (let i = 2; i < firstCells.length; i++) headers.push(`Precio ${i - 1}`);
+    }
+    const rows: { date: string; prices: number[] }[] = [];
+    for (const line of dataLines) {
+      const cells = line.split('\t').map(c => c.trim());
+      const date = parseExcelDate(cells[0]);
+      if (!date) continue;
+      const prices: number[] = [];
+      for (let i = 2; i < cells.length; i++) {
+        const p = parseFloat((cells[i] || '').replace(/,/g, ''));
+        prices.push(isNaN(p) ? 0 : p);
+      }
+      rows.push({ date, prices });
+    }
+    if (!rows.length) { setBulkDatesError('No se encontraron fechas válidas. Usa formato M/D/AAAA'); return; }
+    setBulkDatesHeaders(headers);
+    setBulkDatesPreview(rows);
+    // Auto-match columns to packages by name
+    const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const auto: Record<number, string> = {};
+    headers.forEach((h, i) => {
+      const match = packages.find(pkg => {
+        const np = norm(pkg.name); const nh = norm(h);
+        return np.includes(nh) || nh.includes(np);
+      });
+      if (match) auto[i] = match.id;
+    });
+    setBulkDatesMapping(auto);
+  };
+
+  const applyBulkDates = () => {
+    if (!bulkDatesPreview) return;
+    const newDates: LocalTourDate[] = bulkDatesPreview.map(row => {
+      const id = crypto.randomUUID();
+      return {
+        id,
+        starting_date: row.date,
+        cutoff_days: 7,
+        max_pax: null,
+        repeat_enabled: false,
+        repeat_pattern: null,
+        repeat_until: null,
+        has_price_override: false,
+        price_override_config: null,
+        isNew: true,
+        package_overrides: packages.map(pkg => {
+          const entry = Object.entries(bulkDatesMapping).find(([, pkgId]) => pkgId === pkg.id);
+          const price = entry !== undefined ? row.prices[Number(entry[0])] : null;
+          return {
+            package_id: pkg.id,
+            enabled: true,
+            price_override: price && price > 0 ? price : null,
+            max_pax_override: null,
+            notes: '',
+            blocked_dates: [],
+          };
+        }),
+      };
+    });
+    setDates(prev => [...prev, ...newDates]);
+    setBulkDatesPreview(null);
+    setBulkDatesText('');
+    setShowBulkDates(false);
+    setBulkDatesHeaders([]);
+    setBulkDatesMapping({});
+  };
+
+  const resetBulkDates = () => {
+    setShowBulkDates(false);
+    setBulkDatesText('');
+    setBulkDatesPreview(null);
+    setBulkDatesHeaders([]);
+    setBulkDatesMapping({});
+    setBulkDatesError(null);
   };
 
   const removeDate = async (dateToRemove: LocalTourDate) => {
@@ -2273,8 +2386,8 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
               </div>
               
               <div className="space-y-4">
-                {/* Add Date Button */}
-                <div>
+                {/* Add Date / Bulk Buttons */}
+                <div className="flex gap-2">
                   <Button
                     variant="outline"
                     onClick={addDate}
@@ -2283,7 +2396,107 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                     <Plus className="w-4 h-4 mr-2" />
                     Agregar Fecha
                   </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => { setShowBulkDates(!showBulkDates); setBulkDatesPreview(null); setBulkDatesError(null); }}
+                    className="border-dashed border-[#9996DB] text-[#3546A6] hover:bg-[#9996DB]/10"
+                  >
+                    <Clipboard className="w-4 h-4 mr-2" />
+                    Pegar en bulk
+                  </Button>
                 </div>
+
+                {/* Bulk Dates Panel */}
+                {showBulkDates && (
+                  <div className="bg-white rounded-lg border border-[#9996DB] p-4 space-y-4">
+                    <div>
+                      <p className="text-sm font-medium text-[#3546A6]">Pegar fechas en bulk</p>
+                      <p className="text-xs text-slate-500 mt-1">Copia y pega desde Excel. Columnas: <strong>Fecha · Categoría · Precio 1 · Precio 2 · ...</strong></p>
+                    </div>
+                    {!bulkDatesPreview ? (
+                      <div className="space-y-3">
+                        <Textarea
+                          value={bulkDatesText}
+                          onChange={(e) => setBulkDatesText(e.target.value)}
+                          placeholder={"Con o sin encabezado:\n\nSalidas\tCategoría\tDoble\tTriple\tIndividual\n4/5/2026\tSelección\t2135\t2064\t3340\n4/12/2026\tSelección\t2135\t2064\t3340"}
+                          rows={8}
+                          className="font-mono text-sm"
+                        />
+                        {bulkDatesError && (
+                          <div className="flex items-center gap-2 text-red-600 text-sm">
+                            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                            {bulkDatesError}
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={parseBulkDates} className="bg-gradient-to-r from-[#3546A6] to-[#9996DB] text-white hover:opacity-90">
+                            <Clipboard className="w-4 h-4 mr-2" />Analizar datos
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={resetBulkDates}>Cancelar</Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        <p className="text-sm font-medium text-slate-700">{bulkDatesPreview.length} fechas detectadas</p>
+                        {/* Preview table */}
+                        <div className="overflow-auto max-h-48 rounded border border-slate-200">
+                          <table className="text-xs w-full">
+                            <thead className="bg-slate-100 sticky top-0">
+                              <tr>
+                                <th className="text-left p-2 text-slate-600">Fecha</th>
+                                {bulkDatesHeaders.map((h, i) => <th key={i} className="text-left p-2 text-slate-600">{h}</th>)}
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {bulkDatesPreview.slice(0, 5).map((row, i) => (
+                                <tr key={i} className="border-t border-slate-100">
+                                  <td className="p-2">{formatDate(row.date)}</td>
+                                  {row.prices.map((p, j) => <td key={j} className="p-2">${p.toLocaleString()}</td>)}
+                                </tr>
+                              ))}
+                              {bulkDatesPreview.length > 5 && (
+                                <tr className="border-t border-slate-100">
+                                  <td colSpan={bulkDatesHeaders.length + 1} className="p-2 text-slate-400 text-center italic">
+                                    ... y {bulkDatesPreview.length - 5} fechas más
+                                  </td>
+                                </tr>
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                        {/* Column mapping */}
+                        {packages.length > 0 && bulkDatesHeaders.length > 0 && (
+                          <div className="space-y-2">
+                            <p className="text-sm font-medium text-slate-700">Asignar columnas a paquetes</p>
+                            {bulkDatesHeaders.map((header, idx) => (
+                              <div key={idx} className="flex items-center gap-3">
+                                <span className="text-sm text-slate-600 w-28 truncate font-medium">{header}</span>
+                                <span className="text-slate-300">→</span>
+                                <Select
+                                  value={bulkDatesMapping[idx] || 'unassigned'}
+                                  onValueChange={(val) => setBulkDatesMapping(prev => ({ ...prev, [idx]: val === 'unassigned' ? '' : val }))}
+                                >
+                                  <SelectTrigger className="flex-1 h-8 text-sm"><SelectValue placeholder="Sin asignar" /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="unassigned">Sin asignar</SelectItem>
+                                    {packages.map(pkg => <SelectItem key={pkg.id} value={pkg.id}>{pkg.name}</SelectItem>)}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <div className="flex gap-2">
+                          <Button size="sm" onClick={applyBulkDates} className="bg-gradient-to-r from-[#3546A6] to-[#9996DB] text-white hover:opacity-90">
+                            <Plus className="w-4 h-4 mr-2" />Importar {bulkDatesPreview.length} fechas
+                          </Button>
+                          <Button size="sm" variant="outline" onClick={() => setBulkDatesPreview(null)}>Volver</Button>
+                          <Button size="sm" variant="outline" onClick={resetBulkDates}>Cancelar</Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {datesLoading ? (
                   <div className="bg-white rounded-lg border border-slate-200 p-8 text-center">
@@ -2595,12 +2808,29 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                     <div className="space-y-2">
                       {includes.map((item, index) => (
                         <div key={index} className="flex items-center gap-2 bg-green-50 px-3 py-2 rounded-lg">
-                          <span className="flex-1 text-sm">{item}</span>
-                          <button
-                            type="button"
-                            onClick={() => setIncludes(includes.filter((_, i) => i !== index))}
-                            className="text-red-500 hover:text-red-700"
-                          >
+                          {editingInclude === index ? (
+                            <Input
+                              autoFocus
+                              value={editingIncludeValue}
+                              onChange={(e) => setEditingIncludeValue(e.target.value)}
+                              onBlur={() => {
+                                const v = editingIncludeValue.trim();
+                                if (v) { const u = [...includes]; u[index] = v; setIncludes(u); }
+                                setEditingInclude(null);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') { const v = editingIncludeValue.trim(); if (v) { const u = [...includes]; u[index] = v; setIncludes(u); } setEditingInclude(null); }
+                                if (e.key === 'Escape') setEditingInclude(null);
+                              }}
+                              className="flex-1 h-7 text-sm bg-white"
+                            />
+                          ) : (
+                            <span className="flex-1 text-sm truncate">{item}</span>
+                          )}
+                          <button type="button" onClick={() => { setEditingIncludeValue(item); setEditingInclude(index); }} className="text-slate-400 hover:text-slate-700 flex-shrink-0">
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button type="button" onClick={() => setIncludes(includes.filter((_, i) => i !== index))} className="text-red-500 hover:text-red-700 flex-shrink-0">
                             <X className="w-4 h-4" />
                           </button>
                         </div>
@@ -2641,12 +2871,29 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
                     <div className="space-y-2">
                       {excludes.map((item, index) => (
                         <div key={index} className="flex items-center gap-2 bg-red-50 px-3 py-2 rounded-lg">
-                          <span className="flex-1 text-sm">{item}</span>
-                          <button
-                            type="button"
-                            onClick={() => setExcludes(excludes.filter((_, i) => i !== index))}
-                            className="text-red-500 hover:text-red-700"
-                          >
+                          {editingExclude === index ? (
+                            <Input
+                              autoFocus
+                              value={editingExcludeValue}
+                              onChange={(e) => setEditingExcludeValue(e.target.value)}
+                              onBlur={() => {
+                                const v = editingExcludeValue.trim();
+                                if (v) { const u = [...excludes]; u[index] = v; setExcludes(u); }
+                                setEditingExclude(null);
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') { const v = editingExcludeValue.trim(); if (v) { const u = [...excludes]; u[index] = v; setExcludes(u); } setEditingExclude(null); }
+                                if (e.key === 'Escape') setEditingExclude(null);
+                              }}
+                              className="flex-1 h-7 text-sm bg-white"
+                            />
+                          ) : (
+                            <span className="flex-1 text-sm truncate">{item}</span>
+                          )}
+                          <button type="button" onClick={() => { setEditingExcludeValue(item); setEditingExclude(index); }} className="text-slate-400 hover:text-slate-700 flex-shrink-0">
+                            <Pencil className="w-3.5 h-3.5" />
+                          </button>
+                          <button type="button" onClick={() => setExcludes(excludes.filter((_, i) => i !== index))} className="text-red-500 hover:text-red-700 flex-shrink-0">
                             <X className="w-4 h-4" />
                           </button>
                         </div>
