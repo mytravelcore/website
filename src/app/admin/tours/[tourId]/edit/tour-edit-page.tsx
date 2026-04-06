@@ -865,9 +865,10 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
           const price = entry !== undefined ? row.prices[Number(entry[0])] : null;
           return { package_id: pkg.id, enabled: true, price_override: price && price > 0 ? price : null, max_pax_override: null, notes: '', blocked_dates: [] as string[] };
         });
-        const hasPrices = package_overrides.some(po => po.price_override !== null);
+        const hasPrices = package_overrides.some(po => po.price_override !== null && po.price_override > 0);
+        const mappedCount = package_overrides.filter(po => po.price_override !== null && po.price_override > 0).length;
         const price_override_config: LocalDatePriceConfig | null = hasPrices ? {
-          package_type: packageType,
+          package_type: mappedCount > 1 ? 'multiple' : packageType,
           primary_price_category: primaryCategory,
           packages: pkgs.map(pkg => {
             const po = package_overrides.find(o => o.package_id === pkg.id);
@@ -887,9 +888,10 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
           const price = entry !== undefined ? row.prices[Number(entry[0])] : null;
           return { package_id: pkg.id, enabled: true, price_override: price && price > 0 ? price : null, max_pax_override: null, notes: '', blocked_dates: [] as string[] };
         });
-        const hasPrices = package_overrides.some(po => po.price_override !== null);
+        const hasPrices = package_overrides.some(po => po.price_override !== null && po.price_override > 0);
+        const mappedCount = package_overrides.filter(po => po.price_override !== null && po.price_override > 0).length;
         const price_override_config: LocalDatePriceConfig | null = hasPrices ? {
-          package_type: packageType,
+          package_type: mappedCount > 1 ? 'multiple' : packageType,
           primary_price_category: primaryCategory,
           packages: updatedPackages.map(pkg => {
             const po = package_overrides.find(o => o.package_id === pkg.id);

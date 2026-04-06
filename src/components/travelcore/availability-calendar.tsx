@@ -404,8 +404,8 @@ export default function AvailabilityCalendar({
                       </div>
                       <div className="flex items-center gap-2">
                         <div className="text-right">
-                          {pkg.adultCrossedPrice && pkg.adultCrossedPrice > 0 && (
-                            <p className="text-[10px] text-slate-400 line-through">${pkg.adultCrossedPrice.toLocaleString()}</p>
+                          {(pkg.adultCrossedPrice ?? 0) > 0 && (
+                            <p className="text-[10px] text-slate-400 line-through">${pkg.adultCrossedPrice!.toLocaleString()}</p>
                           )}
                           <p className={cn(
                             "font-display text-base font-bold",
@@ -436,8 +436,8 @@ export default function AvailabilityCalendar({
                       {resolvedPricing.source === 'date_override' ? 'Precio especial para esta fecha' : 'Precio por adulto'}
                     </p>
                     <div className="flex items-baseline gap-1.5 mt-1">
-                      {resolvedPricing.packages[0].adultCrossedPrice && resolvedPricing.packages[0].adultCrossedPrice > 0 && (
-                        <span className="text-sm text-slate-400 line-through">${resolvedPricing.packages[0].adultCrossedPrice.toLocaleString()}</span>
+                      {(resolvedPricing.packages[0].adultCrossedPrice ?? 0) > 0 && (
+                        <span className="text-sm text-slate-400 line-through">${resolvedPricing.packages[0].adultCrossedPrice!.toLocaleString()}</span>
                       )}
                       <span className="font-display text-2xl font-bold text-tc-purple-deep">
                         ${resolvedPricing.packages[0].adultPrice.toLocaleString()}
