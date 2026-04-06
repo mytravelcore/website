@@ -858,62 +858,48 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
       });
       setBulkDatesMapping(updatedMapping);
       // Build dates with resolved mapping
-      const newDates: LocalTourDate[] = bulkDatesPreview.map(row => {
+      const buildDate = (row: { date: string; prices: number[] }, pkgs: LocalPricePackage[], mapping: Record<number, string>): LocalTourDate => {
         const id = crypto.randomUUID();
-        return {
-          id,
-          starting_date: row.date,
-          cutoff_days: 7,
-          max_pax: null,
-          repeat_enabled: false,
-          repeat_pattern: null,
-          repeat_until: null,
-          has_price_override: false,
-          price_override_config: null,
-          isNew: true,
-          package_overrides: updatedPackages.map(pkg => {
-            const entry = Object.entries(updatedMapping).find(([, pkgId]) => pkgId === pkg.id);
-            const price = entry !== undefined ? row.prices[Number(entry[0])] : null;
-            return {
-              package_id: pkg.id,
-              enabled: true,
-              price_override: price && price > 0 ? price : null,
-              max_pax_override: null,
-              notes: '',
-              blocked_dates: [],
-            };
+        const package_overrides = pkgs.map(pkg => {
+          const entry = Object.entries(mapping).find(([, pkgId]) => pkgId === pkg.id);
+          const price = entry !== undefined ? row.prices[Number(entry[0])] : null;
+          return { package_id: pkg.id, enabled: true, price_override: price && price > 0 ? price : null, max_pax_override: null, notes: '', blocked_dates: [] as string[] };
+        });
+        const hasPrices = package_overrides.some(po => po.price_override !== null);
+        const price_override_config: LocalDatePriceConfig | null = hasPrices ? {
+          package_type: packageType,
+          primary_price_category: primaryCategory,
+          packages: pkgs.map(pkg => {
+            const po = package_overrides.find(o => o.package_id === pkg.id);
+            return { ...pkg, adultPrice: po?.price_override ?? pkg.adultPrice };
           }),
-        };
-      });
+          starting_price_from: null,
+        } : null;
+        return { id, starting_date: row.date, cutoff_days: 7, max_pax: null, repeat_enabled: false, repeat_pattern: null, repeat_until: null, has_price_override: hasPrices, price_override_config, isNew: true, package_overrides };
+      };
+      const newDates = bulkDatesPreview.map(row => buildDate(row, updatedPackages, updatedMapping));
       setDates(prev => [...prev, ...newDates]);
     } else {
-      const newDates: LocalTourDate[] = bulkDatesPreview.map(row => {
+      const buildDate = (row: { date: string; prices: number[] }): LocalTourDate => {
         const id = crypto.randomUUID();
-        return {
-          id,
-          starting_date: row.date,
-          cutoff_days: 7,
-          max_pax: null,
-          repeat_enabled: false,
-          repeat_pattern: null,
-          repeat_until: null,
-          has_price_override: false,
-          price_override_config: null,
-          isNew: true,
-          package_overrides: updatedPackages.map(pkg => {
-            const entry = Object.entries(bulkDatesMapping).find(([, pkgId]) => pkgId === pkg.id);
-            const price = entry !== undefined ? row.prices[Number(entry[0])] : null;
-            return {
-              package_id: pkg.id,
-              enabled: true,
-              price_override: price && price > 0 ? price : null,
-              max_pax_override: null,
-              notes: '',
-              blocked_dates: [],
-            };
+        const package_overrides = updatedPackages.map(pkg => {
+          const entry = Object.entries(bulkDatesMapping).find(([, pkgId]) => pkgId === pkg.id);
+          const price = entry !== undefined ? row.prices[Number(entry[0])] : null;
+          return { package_id: pkg.id, enabled: true, price_override: price && price > 0 ? price : null, max_pax_override: null, notes: '', blocked_dates: [] as string[] };
+        });
+        const hasPrices = package_overrides.some(po => po.price_override !== null);
+        const price_override_config: LocalDatePriceConfig | null = hasPrices ? {
+          package_type: packageType,
+          primary_price_category: primaryCategory,
+          packages: updatedPackages.map(pkg => {
+            const po = package_overrides.find(o => o.package_id === pkg.id);
+            return { ...pkg, adultPrice: po?.price_override ?? pkg.adultPrice };
           }),
-        };
-      });
+          starting_price_from: null,
+        } : null;
+        return { id, starting_date: row.date, cutoff_days: 7, max_pax: null, repeat_enabled: false, repeat_pattern: null, repeat_until: null, has_price_override: hasPrices, price_override_config, isNew: true, package_overrides };
+      };
+      const newDates = bulkDatesPreview.map(row => buildDate(row));
       setDates(prev => [...prev, ...newDates]);
     }
 
