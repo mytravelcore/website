@@ -60,9 +60,14 @@ export function resolvePricingForDate(
       details: pkg.details,
     }));
 
+    // Auto-detect 'multiple' if there are >1 packages with a real price,
+    // regardless of what was stored in package_type (handles legacy data)
+    const packagesWithPrice = resolvedPkgs.filter(p => p.adultPrice > 0);
+    const effectiveType = packagesWithPrice.length > 1 ? 'multiple' : (config.package_type || 'single');
+
     return {
       source: 'date_override',
-      packageType: config.package_type || 'single',
+      packageType: effectiveType,
       packages: resolvedPkgs,
       startingPriceFrom: config.starting_price_from,
     };
