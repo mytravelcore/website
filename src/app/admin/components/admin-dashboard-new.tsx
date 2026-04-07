@@ -654,48 +654,53 @@ export default function AdminDashboard({
             </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white rounded-xl border border-slate-200 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-[#3546A6]/10 flex items-center justify-center">
-                    <Map className="w-6 h-6 text-[#3546A6]" />
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="bg-white rounded-xl border border-slate-200 p-3 md:p-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-[#3546A6]/10 flex items-center justify-center shrink-0">
+                    <Map className="w-4 h-4 text-[#3546A6]" />
                   </div>
-                  <TrendingUp className="w-5 h-5 text-green-500" />
+                  <div>
+                    <p className="text-xl md:text-2xl font-bold text-[#3546A6] leading-tight">{tours.length}</p>
+                    <p className="text-xs text-slate-500 leading-tight">Tours activos</p>
+                  </div>
                 </div>
-                <p className="text-3xl font-bold text-[#3546A6]">{tours.length}</p>
-                <p className="text-slate-500">Tours activos</p>
               </div>
 
-              <div className="bg-white rounded-xl border border-slate-200 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-amber-100 flex items-center justify-center">
-                    <Star className="w-6 h-6 text-amber-500" />
+              <div className="bg-white rounded-xl border border-slate-200 p-3 md:p-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-amber-100 flex items-center justify-center shrink-0">
+                    <Star className="w-4 h-4 text-amber-500" />
+                  </div>
+                  <div>
+                    <p className="text-xl md:text-2xl font-bold text-[#3546A6] leading-tight">{tours.filter((t) => t.featured).length}</p>
+                    <p className="text-xs text-slate-500 leading-tight">Destacados</p>
                   </div>
                 </div>
-                <p className="text-3xl font-bold text-[#3546A6]">
-                  {tours.filter((t) => t.featured).length}
-                </p>
-                <p className="text-slate-500">Tours destacados</p>
               </div>
 
-              <div className="bg-white rounded-xl border border-slate-200 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center">
-                    <MapPin className="w-6 h-6 text-emerald-500" />
+              <div className="bg-white rounded-xl border border-slate-200 p-3 md:p-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-emerald-100 flex items-center justify-center shrink-0">
+                    <MapPin className="w-4 h-4 text-emerald-500" />
+                  </div>
+                  <div>
+                    <p className="text-xl md:text-2xl font-bold text-[#3546A6] leading-tight">{destinations.length}</p>
+                    <p className="text-xs text-slate-500 leading-tight">Destinos</p>
                   </div>
                 </div>
-                <p className="text-3xl font-bold text-[#3546A6]">{destinations.length}</p>
-                <p className="text-slate-500">Destinos</p>
               </div>
 
-              <div className="bg-white rounded-xl border border-slate-200 p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center">
-                    <Activity className="w-6 h-6 text-purple-500" />
+              <div className="bg-white rounded-xl border border-slate-200 p-3 md:p-5">
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-lg bg-purple-100 flex items-center justify-center shrink-0">
+                    <Activity className="w-4 h-4 text-purple-500" />
+                  </div>
+                  <div>
+                    <p className="text-xl md:text-2xl font-bold text-[#3546A6] leading-tight">{activities.length}</p>
+                    <p className="text-xs text-slate-500 leading-tight">Actividades</p>
                   </div>
                 </div>
-                <p className="text-3xl font-bold text-[#3546A6]">{activities.length}</p>
-                <p className="text-slate-500">Actividades</p>
               </div>
             </div>
 
@@ -832,131 +837,176 @@ export default function AdminDashboard({
               )}
             </div>
 
-            <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b border-slate-200 bg-slate-50">
-                      <th className="px-4 py-4 text-left">
-                        <Checkbox
-                          checked={selectedTours.length === filteredTours.length && filteredTours.length > 0}
-                          onCheckedChange={toggleSelectAllTours}
-                        />
-                      </th>
-                      <th className="px-4 py-4 text-left text-sm font-semibold text-slate-700">Tour</th>
-                      <th className="px-4 py-4 text-left text-sm font-semibold text-slate-700">Dificultad</th>
-                      <th className="px-4 py-4 text-left text-sm font-semibold text-slate-700">Duración</th>
-                      <th className="px-4 py-4 text-left text-sm font-semibold text-slate-700">Precio</th>
-                      <th className="px-4 py-4 text-left text-sm font-semibold text-slate-700">Estado</th>
-                      <th className="px-4 py-4 text-right text-sm font-semibold text-slate-700">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredTours.length > 0 ? (
-                      filteredTours.map((tour) => (
-                        <tr key={tour.id} className="border-b border-slate-200 hover:bg-slate-50 transition-colors">
-                          <td className="px-4 py-4">
-                            <Checkbox
-                              checked={selectedTours.includes(tour.id)}
-                              onCheckedChange={() => toggleSelectTour(tour.id)}
-                            />
-                          </td>
-                          <td className="px-4 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-100 flex-shrink-0">
-                                {tour.hero_image_url ? (
-                                  <img src={tour.hero_image_url} alt={tour.title} className="w-full h-full object-cover" />
-                                ) : (
-                                  <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">
-                                    Sin img
-                                  </div>
-                                )}
-                              </div>
-                              <div>
-                                <p className="font-medium text-slate-900">{tour.title}</p>
-                                <p className="text-xs text-slate-500">/{tour.slug}</p>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="px-4 py-4">
-                            {tour.difficulty ? (
-                              <Badge className={getDifficultyColor(tour.difficulty)}>{tour.difficulty}</Badge>
-                            ) : (
-                              <span className="text-slate-400 text-sm">-</span>
-                            )}
-                          </td>
-                          <td className="px-4 py-4">
-                            <span className="text-sm text-slate-600">
-                              {tour.duration_days ? `${tour.duration_days} día(s)` : "-"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-4">
-                            <span className="text-sm font-medium text-slate-900">
-                              {tour.base_price_usd ? `$${tour.base_price_usd.toLocaleString()}` : "-"}
-                            </span>
-                          </td>
-                          <td className="px-4 py-4">
-                            <Badge
-                              className={
-                                tour.status === "published"
-                                  ? "bg-green-100 text-green-700"
-                                  : tour.status === "draft"
-                                  ? "bg-yellow-100 text-yellow-700"
-                                  : "bg-slate-100 text-slate-600"
-                              }
-                            >
-                              {tour.status === "published" ? "Publicado" : tour.status === "draft" ? "Borrador" : "Archivado"}
-                            </Badge>
-                          </td>
-                          <td className="px-4 py-4">
-                            <div className="flex items-center justify-end gap-1">
-                              <Link href={`/tours/${tour.slug}`} target="_blank">
-                                <Button variant="ghost" size="sm" className="text-slate-600" title="Ver en sitio">
-                                  <Eye className="w-4 h-4" />
-                                </Button>
-                              </Link>
-                              <Link href={`/admin/tours/${tour.id}/edit`}>
-                                <Button variant="ghost" size="sm" className="text-slate-600" title="Editar">
-                                  <Edit className="w-4 h-4" />
-                                </Button>
-                              </Link>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-slate-600 hover:text-[#3546A6] hover:bg-[#3546A6]/5"
-                                title="Duplicar"
-                                disabled={duplicatingTourId === tour.id}
-                                onClick={() => handleDuplicateTour(tour)}
-                              >
-                                {duplicatingTourId === tour.id ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  <Copy className="w-4 h-4" />
-                                )}
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                title="Eliminar"
-                                onClick={() => setDeleteTarget({ type: "tour", item: tour })}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))
+            {/* Mobile card list */}
+            <div className="md:hidden space-y-2">
+              {filteredTours.length > 0 ? filteredTours.map((tour) => (
+                <div key={tour.id} className="bg-white rounded-lg border border-slate-200 p-3 flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-lg overflow-hidden bg-slate-100 shrink-0">
+                    {tour.hero_image_url ? (
+                      <img src={tour.hero_image_url} alt={tour.title} className="w-full h-full object-cover" />
                     ) : (
-                      <tr>
-                        <td colSpan={7} className="px-6 py-12 text-center">
-                          <p className="text-slate-500">No se encontraron tours</p>
+                      <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">Sin img</div>
+                    )}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-slate-900 text-sm truncate">{tour.title}</p>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <Badge
+                        className={cn("text-xs py-0",
+                          tour.status === "published" ? "bg-green-100 text-green-700" :
+                          tour.status === "draft" ? "bg-yellow-100 text-yellow-700" :
+                          "bg-slate-100 text-slate-600"
+                        )}
+                      >
+                        {tour.status === "published" ? "Publicado" : tour.status === "draft" ? "Borrador" : "Archivado"}
+                      </Badge>
+                      {tour.base_price_usd && (
+                        <span className="text-xs text-slate-500">${tour.base_price_usd.toLocaleString()}</span>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    <Link href={`/admin/tours/${tour.id}/edit`}>
+                      <Button variant="ghost" size="sm" className="text-slate-600 h-8 w-8 p-0">
+                        <Edit className="w-3.5 h-3.5" />
+                      </Button>
+                    </Link>
+                    <Button
+                      variant="ghost" size="sm"
+                      className="text-slate-600 hover:text-[#3546A6] h-8 w-8 p-0"
+                      disabled={duplicatingTourId === tour.id}
+                      onClick={() => handleDuplicateTour(tour)}
+                    >
+                      {duplicatingTourId === tour.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Copy className="w-3.5 h-3.5" />}
+                    </Button>
+                    <Button
+                      variant="ghost" size="sm"
+                      className="text-red-600 hover:bg-red-50 h-8 w-8 p-0"
+                      onClick={() => setDeleteTarget({ type: "tour", item: tour })}
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              )) : (
+                <p className="text-center text-slate-500 py-8 text-sm">No se encontraron tours</p>
+              )}
+            </div>
+
+            {/* Desktop table */}
+            <div className="hidden md:block bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200 bg-slate-50">
+                    <th className="px-4 py-3 text-left">
+                      <Checkbox
+                        checked={selectedTours.length === filteredTours.length && filteredTours.length > 0}
+                        onCheckedChange={toggleSelectAllTours}
+                      />
+                    </th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Tour</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Dificultad</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Duración</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Precio</th>
+                    <th className="px-4 py-3 text-left text-sm font-semibold text-slate-700">Estado</th>
+                    <th className="px-4 py-3 text-right text-sm font-semibold text-slate-700">Acciones</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTours.length > 0 ? (
+                    filteredTours.map((tour) => (
+                      <tr key={tour.id} className="border-b border-slate-200 hover:bg-slate-50 transition-colors">
+                        <td className="px-4 py-3">
+                          <Checkbox
+                            checked={selectedTours.includes(tour.id)}
+                            onCheckedChange={() => toggleSelectTour(tour.id)}
+                          />
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg overflow-hidden bg-slate-100 flex-shrink-0">
+                              {tour.hero_image_url ? (
+                                <img src={tour.hero_image_url} alt={tour.title} className="w-full h-full object-cover" />
+                              ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-400 text-xs">Sin img</div>
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-medium text-slate-900 text-sm">{tour.title}</p>
+                              <p className="text-xs text-slate-500">/{tour.slug}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          {tour.difficulty ? (
+                            <Badge className={getDifficultyColor(tour.difficulty)}>{tour.difficulty}</Badge>
+                          ) : (
+                            <span className="text-slate-400 text-sm">-</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm text-slate-600">
+                            {tour.duration_days ? `${tour.duration_days} día(s)` : "-"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <span className="text-sm font-medium text-slate-900">
+                            {tour.base_price_usd ? `$${tour.base_price_usd.toLocaleString()}` : "-"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <Badge
+                            className={
+                              tour.status === "published" ? "bg-green-100 text-green-700" :
+                              tour.status === "draft" ? "bg-yellow-100 text-yellow-700" :
+                              "bg-slate-100 text-slate-600"
+                            }
+                          >
+                            {tour.status === "published" ? "Publicado" : tour.status === "draft" ? "Borrador" : "Archivado"}
+                          </Badge>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-1">
+                            <Link href={`/tours/${tour.slug}`} target="_blank">
+                              <Button variant="ghost" size="sm" className="text-slate-600" title="Ver en sitio">
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </Link>
+                            <Link href={`/admin/tours/${tour.id}/edit`}>
+                              <Button variant="ghost" size="sm" className="text-slate-600" title="Editar">
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                            </Link>
+                            <Button
+                              variant="ghost" size="sm"
+                              className="text-slate-600 hover:text-[#3546A6] hover:bg-[#3546A6]/5"
+                              title="Duplicar"
+                              disabled={duplicatingTourId === tour.id}
+                              onClick={() => handleDuplicateTour(tour)}
+                            >
+                              {duplicatingTourId === tour.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Copy className="w-4 h-4" />}
+                            </Button>
+                            <Button
+                              variant="ghost" size="sm"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                              title="Eliminar"
+                              onClick={() => setDeleteTarget({ type: "tour", item: tour })}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
                         </td>
                       </tr>
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={7} className="px-6 py-12 text-center">
+                        <p className="text-slate-500">No se encontraron tours</p>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
