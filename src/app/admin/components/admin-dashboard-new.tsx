@@ -507,19 +507,20 @@ export default function AdminDashboard({
     <div className="min-h-screen bg-slate-50">
       {/* Top Navigation */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6">
-          <div className="flex items-center justify-between h-16">
+        <div className="max-w-7xl mx-auto px-4 md:px-6">
+          {/* Main row: logo + desktop tabs + user menu */}
+          <div className="flex items-center justify-between h-14 md:h-16">
             {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-r from-[#3546A6] to-[#9996DB] flex items-center justify-center text-white font-bold text-lg">
+            <div className="flex items-center gap-2 md:gap-3">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-xl bg-gradient-to-r from-[#3546A6] to-[#9996DB] flex items-center justify-center text-white font-bold text-base md:text-lg shrink-0">
                 T
               </div>
-              <span className="font-bold text-xl text-[#3546A6]">TravelCore</span>
-              <Badge variant="secondary" className="ml-2">Admin</Badge>
+              <span className="font-bold text-base md:text-xl text-[#3546A6]">TravelCore</span>
+              <Badge variant="secondary" className="ml-1 md:ml-2 text-xs hidden sm:inline-flex">Admin</Badge>
             </div>
 
-            {/* Tabs */}
-            <nav className="flex items-center gap-1">
+            {/* Tabs – desktop only */}
+            <nav className="hidden md:flex items-center gap-1">
               <Button
                 variant={activeTab === "panel" ? "secondary" : "ghost"}
                 onClick={() => setActiveTab("panel")}
@@ -555,13 +556,13 @@ export default function AdminDashboard({
             </nav>
 
             {/* User Menu */}
-            <div className="flex items-center gap-4">
-              <Link href="/" className="text-sm text-slate-500 hover:text-[#3546A6]">
+            <div className="flex items-center gap-2 md:gap-4">
+              <Link href="/" className="hidden md:block text-sm text-slate-500 hover:text-[#3546A6]">
                 ← Volver al portal
               </Link>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="flex items-center gap-2">
+                  <Button variant="ghost" className="flex items-center gap-1 md:gap-2 px-2 md:px-3">
                     <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#3546A6] to-[#9996DB] flex items-center justify-center text-white text-sm font-medium">
                       A
                     </div>
@@ -574,7 +575,7 @@ export default function AdminDashboard({
                     Mi perfil
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem 
+                  <DropdownMenuItem
                     className="text-red-600 cursor-pointer"
                     onClick={async () => {
                       try {
@@ -593,18 +594,61 @@ export default function AdminDashboard({
               </DropdownMenu>
             </div>
           </div>
+
+          {/* Mobile tabs row */}
+          <div className="flex md:hidden overflow-x-auto gap-1 pb-2 pt-1 border-t border-slate-100">
+            <Button
+              variant={activeTab === "panel" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setActiveTab("panel")}
+              className={cn("shrink-0 text-xs h-8", activeTab === "panel" && "bg-[#3546A6]/10 text-[#3546A6]")}
+            >
+              <LayoutDashboard className="w-3.5 h-3.5 mr-1" />
+              Panel
+            </Button>
+            <Button
+              variant={activeTab === "tours" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setActiveTab("tours")}
+              className={cn("shrink-0 text-xs h-8", activeTab === "tours" && "bg-[#3546A6]/10 text-[#3546A6]")}
+            >
+              <Route className="w-3.5 h-3.5 mr-1" />
+              Tours
+            </Button>
+            <Button
+              variant={activeTab === "actividades" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setActiveTab("actividades")}
+              className={cn("shrink-0 text-xs h-8", activeTab === "actividades" && "bg-[#3546A6]/10 text-[#3546A6]")}
+            >
+              <Activity className="w-3.5 h-3.5 mr-1" />
+              Actividades
+            </Button>
+            <Button
+              variant={activeTab === "destinos" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setActiveTab("destinos")}
+              className={cn("shrink-0 text-xs h-8", activeTab === "destinos" && "bg-[#3546A6]/10 text-[#3546A6]")}
+            >
+              <MapPin className="w-3.5 h-3.5 mr-1" />
+              Destinos
+            </Button>
+            <Link href="/" className="shrink-0 flex items-center px-2 text-xs text-slate-500 hover:text-[#3546A6]">
+              ← Portal
+            </Link>
+          </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-4 md:px-6 py-4 md:py-8">
         {/* PANEL TAB */}
         {activeTab === "panel" && (
           <div className="space-y-6">
             {/* Welcome */}
-            <div className="bg-gradient-to-r from-[#3546A6] to-[#9996DB] rounded-2xl p-8 text-white">
-              <h1 className="text-3xl font-bold mb-2">¡Bienvenido al Panel de Administración!</h1>
-              <p className="text-white/80 text-lg">
+            <div className="bg-gradient-to-r from-[#3546A6] to-[#9996DB] rounded-2xl p-4 md:p-8 text-white">
+              <h1 className="text-lg md:text-3xl font-bold mb-1 md:mb-2">¡Bienvenido al Panel!</h1>
+              <p className="text-white/80 text-sm md:text-lg">
                 Gestiona tours, destinos y actividades desde un solo lugar.
               </p>
             </div>
@@ -656,8 +700,8 @@ export default function AdminDashboard({
             </div>
 
             {/* Quick Actions */}
-            <div className="bg-white rounded-xl border border-slate-200 p-6">
-              <h2 className="text-xl font-semibold text-[#3546A6] mb-4">Acciones rápidas</h2>
+            <div className="bg-white rounded-xl border border-slate-200 p-4 md:p-6">
+              <h2 className="text-base md:text-xl font-semibold text-[#3546A6] mb-3 md:mb-4">Acciones rápidas</h2>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <Link href="/admin/tours/create">
                   <Button className="w-full h-auto py-4 flex flex-col items-center gap-2 bg-gradient-to-r from-[#FFA03B] to-[#FFD491] hover:opacity-90 text-white">
@@ -750,10 +794,10 @@ export default function AdminDashboard({
 
         {/* TOURS TAB */}
         {activeTab === "tours" && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
+          <div className="space-y-4 md:space-y-6">
+            <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <h1 className="text-2xl font-bold text-slate-900">Todos los Tours</h1>
+                <h1 className="text-xl md:text-2xl font-bold text-slate-900">Todos los Tours</h1>
                 <p className="text-slate-500 text-sm mt-1">{tours.length} tours en total</p>
               </div>
               <Link href="/admin/tours/create">
@@ -764,7 +808,7 @@ export default function AdminDashboard({
               </Link>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4">
               <div className="flex-1 relative">
                 <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <Input
@@ -919,10 +963,10 @@ export default function AdminDashboard({
 
         {/* ACTIVIDADES TAB */}
         {activeTab === "actividades" && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
+          <div className="space-y-4 md:space-y-6">
+            <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <h1 className="text-2xl font-bold text-slate-900">Actividades</h1>
+                <h1 className="text-xl md:text-2xl font-bold text-slate-900">Actividades</h1>
                 <p className="text-slate-500 text-sm mt-1">{activities.length} actividades en total</p>
               </div>
               <Button
@@ -938,7 +982,7 @@ export default function AdminDashboard({
               </Button>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4">
               <div className="flex-1 relative">
                 <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <Input
@@ -1035,10 +1079,10 @@ export default function AdminDashboard({
 
         {/* DESTINOS TAB */}
         {activeTab === "destinos" && (
-          <div className="space-y-6">
-            <div className="flex items-center justify-between">
+          <div className="space-y-4 md:space-y-6">
+            <div className="flex items-center justify-between flex-wrap gap-3">
               <div>
-                <h1 className="text-2xl font-bold text-slate-900">Destinos</h1>
+                <h1 className="text-xl md:text-2xl font-bold text-slate-900">Destinos</h1>
                 <p className="text-slate-500 text-sm mt-1">{destinations.length} destinos en total</p>
               </div>
               <Button
@@ -1054,7 +1098,7 @@ export default function AdminDashboard({
               </Button>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 md:gap-4">
               <div className="flex-1 relative">
                 <Search className="w-5 h-5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
                 <Input

@@ -121,89 +121,82 @@ export default function TourEditorLayout({
   return (
     <div className="flex flex-col h-screen bg-slate-50">
       {/* Top Header */}
-      <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 flex-shrink-0">
-        {/* Back to Tours + Tour Title */}
-        <div className="flex items-center gap-4">
-          <NavLink 
-            href="/admin"
-            className="flex items-center gap-2 text-slate-600 hover:text-[#3546A6] text-sm font-medium transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Volver a Tours
-          </NavLink>
-          <div className="h-6 w-px bg-slate-200" />
-          <h1 className="text-xl font-semibold text-[#3546A6]">
-            {tour.title}
-          </h1>
-          <Badge 
-            variant={tour.status === 'published' ? 'default' : 'secondary'}
-            className={cn(
-              "py-1",
-              tour.status === 'published' 
-                ? 'bg-green-100 text-green-700 hover:bg-green-100' 
-                : 'bg-amber-100 text-amber-700 hover:bg-amber-100'
-            )}
-          >
-            {tour.status === 'published' ? 'Publicado' : 'Borrador'}
-          </Badge>
-        </div>
+      <header className="bg-white border-b border-slate-200 flex-shrink-0">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between md:h-14 px-4 md:px-6 py-2 md:py-0 gap-2">
+          {/* Left: back + title + badge */}
+          <div className="flex items-center gap-2 md:gap-3 min-w-0">
+            <NavLink
+              href="/admin"
+              className="flex items-center gap-1.5 text-slate-600 hover:text-[#3546A6] text-sm font-medium transition-colors shrink-0"
+            >
+              <ArrowLeft className="w-4 h-4" />
+              <span className="hidden sm:inline">Volver</span>
+            </NavLink>
+            <div className="h-5 w-px bg-slate-200 hidden md:block" />
+            <h1 className="text-sm md:text-base font-semibold text-[#3546A6] truncate">
+              {tour.title}
+            </h1>
+            <Badge
+              variant={tour.status === 'published' ? 'default' : 'secondary'}
+              className={cn(
+                "shrink-0 py-0.5 text-xs",
+                tour.status === 'published'
+                  ? 'bg-green-100 text-green-700 hover:bg-green-100'
+                  : 'bg-amber-100 text-amber-700 hover:bg-amber-100'
+              )}
+            >
+              {tour.status === 'published' ? 'Publicado' : 'Borrador'}
+            </Badge>
+          </div>
 
-        {/* Right Actions */}
-        <div className="flex items-center gap-3">
-          {/* Preview Button */}
-          <Button 
-            variant="outline" 
-            size="sm"
-            asChild
-          >
-            <Link href={`/tours/${tour.slug}`} target="_blank">
-              <Eye className="w-4 h-4 mr-2" />
-              Vista previa
-            </Link>
-          </Button>
+          {/* Right: actions */}
+          <div className="flex items-center gap-1.5 md:gap-2 shrink-0">
+            <Button variant="outline" size="sm" asChild>
+              <Link href={`/tours/${tour.slug}`} target="_blank">
+                <Eye className="w-4 h-4 md:mr-1.5" />
+                <span className="hidden md:inline">Vista previa</span>
+              </Link>
+            </Button>
 
-          {/* Publish/Draft Toggle */}
-          <Button
-            onClick={handlePublish}
-            disabled={isSaving}
-            variant={tour.status === 'published' ? 'outline' : 'default'}
-            size="sm"
-            className={cn(
-              tour.status !== 'published' && "bg-gradient-to-r from-[#FFA03B] to-[#FFD491] hover:opacity-90 text-white"
-            )}
-          >
-            {isSaving ? (
-              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-            ) : null}
-            {tour.status === 'published' ? 'Despublicar' : 'Publicar'}
-          </Button>
+            <Button
+              onClick={handlePublish}
+              disabled={isSaving}
+              variant={tour.status === 'published' ? 'outline' : 'default'}
+              size="sm"
+              className={cn(
+                tour.status !== 'published' && "bg-gradient-to-r from-[#FFA03B] to-[#FFD491] hover:opacity-90 text-white"
+              )}
+            >
+              {isSaving ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : null}
+              {tour.status === 'published' ? 'Despublicar' : 'Publicar'}
+            </Button>
 
-          {/* User Menu */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-[#3546A6] to-[#9996DB] flex items-center justify-center text-white text-sm font-medium">
-                  A
-                </div>
-                <ChevronDown className="w-4 h-4 text-slate-500" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuItem>
-                <User className="w-4 h-4 mr-2" />
-                Mi perfil
-              </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Settings className="w-4 h-4 mr-2" />
-                Configuración
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600">
-                <LogOut className="w-4 h-4 mr-2" />
-                Cerrar sesión
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="flex items-center gap-1 px-2">
+                  <div className="w-7 h-7 rounded-full bg-gradient-to-r from-[#3546A6] to-[#9996DB] flex items-center justify-center text-white text-xs font-medium">
+                    A
+                  </div>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-500" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem>
+                  <User className="w-4 h-4 mr-2" />
+                  Mi perfil
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Settings className="w-4 h-4 mr-2" />
+                  Configuración
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem className="text-red-600">
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Cerrar sesión
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </header>
 

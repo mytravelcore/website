@@ -1487,13 +1487,13 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
 
   // UI
   return (
-    <div className="flex h-full">
-      {/* Sidebar Navigation */}
-      <aside className="w-64 border-r border-slate-200 bg-slate-50 overflow-y-auto flex-shrink-0">
+    <div className="flex flex-col md:flex-row h-full">
+      {/* Sidebar Navigation – desktop only */}
+      <aside className="hidden md:flex md:flex-col w-64 border-r border-slate-200 bg-slate-50 overflow-y-auto flex-shrink-0">
         <div className="p-4">
           <h2 className="font-semibold text-slate-900 mb-1">Editor del Tour</h2>
           <p className="text-xs text-slate-500 mb-4">Toda la configuración en una página</p>
-          
+
           <nav className="space-y-1">
             {sidebarSections.map((section) => {
               const Icon = section.icon;
@@ -1518,9 +1518,34 @@ export default function TourEditPage({ initialTour, destinations }: TourEditPage
         </div>
       </aside>
 
+      {/* Mobile horizontal section nav */}
+      <div className="md:hidden border-b border-slate-200 bg-slate-50 overflow-x-auto flex-shrink-0">
+        <div className="flex gap-1 p-2">
+          {sidebarSections.map((section) => {
+            const Icon = section.icon;
+            return (
+              <button
+                key={section.id}
+                type="button"
+                onClick={() => scrollToSection(section.id)}
+                className={cn(
+                  "flex-shrink-0 flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium transition-colors whitespace-nowrap",
+                  activeSection === section.id
+                    ? "bg-[#3546A6] text-white"
+                    : "text-slate-600 hover:bg-slate-200"
+                )}
+              >
+                <Icon className="w-3.5 h-3.5 flex-shrink-0" />
+                <span>{section.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Main Content */}
       <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto p-6 space-y-12">
+        <div className="max-w-3xl mx-auto p-4 md:p-6 space-y-8 md:space-y-12">
         {/* General Information */}
             <section id="general" className="scroll-mt-6">
               <div className="mb-6">
